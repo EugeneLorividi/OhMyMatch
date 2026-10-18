@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ t("privacy.title") }} · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>{{ t("privacy.title") }}</h1>
+  <p>{{ t("privacy.intro") }}</p>
+
+  <h2>{{ t("privacy.stored_title") }}</h2>
+  <ul>
+    <li>{{ t("privacy.stored_account") }}</li>
+    <li>{{ t("privacy.stored_profile") }}</li>
+    <li>{{ t("privacy.stored_result") }}</li>
+    <li>{{ t("privacy.stored_dislikes") }}</li>
+    <li>{{ t("privacy.stored_reactions") }}</li>
+    <li>{{ t("privacy.stored_sessions", days=session_days) }}</li>
+    <li>{{ t("privacy.stored_invites") }}</li>
+  </ul>
+
+  <h2>{{ t("privacy.not_stored_title") }}</h2>
+  <p>{{ t("privacy.not_stored") }}</p>
+
+  <h2>{{ t("privacy.memory_title") }}</h2>
+  <p>{{ t("privacy.memory") }}</p>
+
+  <h2>{{ t("privacy.logs_title") }}</h2>
+  <p>{{ t("privacy.logs", days=log_days) }}</p>
+
+  <h2>{{ t("privacy.cookies_title") }}</h2>
+  <p>{{ t("privacy.cookies") }}</p>
+
+  <h2>{{ t("privacy.visibility_title") }}</h2>
+  <p>{{ t("privacy.visibility") }}</p>
+
+  <h2 id="inference">{{ t("privacy.inference_title") }}</h2>
+  <p>{{ t("privacy.inference") }}</p>
+
+  <h2>{{ t("privacy.admin_title") }}</h2>
+  <p>{{ t("consent.admin") }}</p>
+
+  <h2>{{ t("privacy.backups_title") }}</h2>
+  <p>{{ t("privacy.backups", days=backup_days) }}</p>
+
+  <h2>{{ t("privacy.deletion_title") }}</h2>
+  <p>{{ t("privacy.deletion", days=backup_days) }}</p>
+{% endblock %}

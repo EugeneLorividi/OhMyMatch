@@ -33,3 +33,6 @@ textarea { width: 100%; font: 0.9rem/1.4 ui-monospace, monospace; padding: 0.5re
 .reactions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
 .reactions button { margin-top: 0; }
 .card.done { opacity: 0.8; }
+footer { max-width: 36rem; margin: 2rem auto; padding: 0 1rem; font-size: 0.9rem; }
+.tab.danger { border-color: var(--error); }
+button.danger { border: 1px solid var(--error); }

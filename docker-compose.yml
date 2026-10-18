@@ -8,6 +8,10 @@ services:
     image: ohmymatch-app
     restart: unless-stopped
     env_file: ${HOME}/secrets/ohmymatch.env
+    environment:
+      # Connections published on 127.0.0.1:8000 arrive from the edge gateway (rootless port
+      # forwarding), so only that peer may set X-Forwarded-For. See docs/DECISIONS.md.
+      TRUSTED_PROXIES: "172.31.240.1"
     ports:
       - "127.0.0.1:8000:8000"
     networks:
@@ -35,10 +39,47 @@ services:
       timeout: 3s
       retries: 10
 
+  # Encrypted backups: docker compose --profile ops run --rm backup
+  backup:
+    profiles: ["ops"]
+    build: deploy/backup
+    image: ohmymatch-backup
+    env_file: ${HOME}/secrets/ohmymatch.env
+    environment:
+      PGHOST: db
+      RETENTION_DAYS: "14"
+    networks:
+      - backend
+    read_only: true
+    tmpfs:
+      - /tmp
+    # create_host_path: false, so a missing key file fails loudly instead of becoming a dir.
+    volumes:
+      - type: bind
+        source: ${BACKUP_DIR:-./backups}
+        target: /backups
+        bind:
+          create_host_path: false
+      # Public key(s) only; the private key never lives on this server.
+      - type: bind
+        source: ${BACKUP_RECIPIENTS:-${HOME}/secrets/backup-recipients.txt}
+        target: /keys/recipients.txt
+        read_only: true
+        bind:
+          create_host_path: false
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["backup.sh"]
+
 networks:
   backend:
     internal: true
-  edge: {}
+  edge:
+    ipam:
+      config:
+        - subnet: 172.31.240.0/28
+          gateway: 172.31.240.1
 
 volumes:
   pgdata:

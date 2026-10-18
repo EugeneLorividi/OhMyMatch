@@ -22,6 +22,7 @@ from sqlalchemy import text  # noqa: E402
 from app.db.base import Base  # noqa: E402
 from app.db.session import get_sessionmaker  # noqa: E402
 from app.main import app  # noqa: E402
+from app.ratelimit import limiter  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -35,7 +36,9 @@ def database():
 
 @pytest.fixture(autouse=True)
 def clean_tables(database):
+    limiter.reset()
     yield
+    limiter.reset()
     names = ", ".join(table.name for table in Base.metadata.sorted_tables)
     with get_sessionmaker()() as db:
         db.execute(text(f"TRUNCATE {names} CASCADE"))

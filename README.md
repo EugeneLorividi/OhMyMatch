@@ -52,4 +52,27 @@ All test data is synthetic. Never add real results, screenshots or user data.
 
 ## Deployment
 nginx config is managed outside the repo; `deploy/*.example` are the reference files.
-See section 3 of the spec for the VPS checklist.
+See section 3 of the spec for the VPS checklist. nginx must overwrite `X-Forwarded-For` with
+`$remote_addr` (as in the example): the app uses it for per-IP rate limits.
+
+## Backups
+Encrypted with [age](https://age-encryption.org) on the server; no plaintext dump touches the disk.
+
+```sh
+# Once, on a machine you trust (not the server): create the key pair, keep identity.txt offline.
+age-keygen -o identity.txt && age-keygen -y identity.txt > backup-recipients.txt
+# On the server: only the public key.
+install -m 600 backup-recipients.txt ~/secrets/backup-recipients.txt
+mkdir -m 700 -p ~/ohmymatch/backups
+
+# Backup (e.g. daily from cron); deletes copies older than 14 days.
+docker compose --profile ops run --rm backup
+
+# Restore into the running database (brings the private key in for this one run only).
+docker compose --profile ops run --rm -v /path/to/identity.txt:/keys/identity.txt:ro \
+  backup restore.sh /backups/ohmymatch-<stamp>.dump.age
+```
+
+## Extra checks (Docker, synthetic data only)
+- `deploy/backup/restore-test.sh`: backup, rotation and restore round trip with a throwaway key.
+- `tests/proxy/run.sh`: per-IP rate limits behind a real nginx with `X-Forwarded-For`.

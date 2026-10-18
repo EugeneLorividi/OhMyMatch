@@ -1,5 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
   <p>{{ tm(message) }}</p>
-  <p><a href="/feed">{{ t("common.back_to_feed") }}</a></p>
+  <p><a href="{{ back or '/' }}">{{ t("common.back") }}</a></p>
 {% endblock %}

@@ -11,7 +11,7 @@ from app.db.session import get_sessionmaker
 from app.matching.feed import build_feed
 from app.models import Match, Reaction, User
 from app.reactions import Outcome, Unavailable, react, remove_match
-from tests.helpers import post, register, score_form, uk
+from tests.helpers import post, register, score_form, uk, without_random_values
 from tests.test_feed import add_user
 
 
@@ -182,7 +182,9 @@ def test_feed_cards_have_reaction_buttons(client, db):
     for key in ("feed.like", "feed.pass", "feed.block"):
         assert uk(key) in page
     for category in CATEGORIES:
-        assert not re.search(rf"\b{re.escape(category.name)}\b", page, re.IGNORECASE)
+        assert not re.search(
+            rf"\b{re.escape(category.name)}\b", without_random_values(page, client), re.IGNORECASE
+        )
 
 
 def test_react_route_plain_and_htmx(client, db, calls):
@@ -216,7 +218,8 @@ def test_mutual_like_through_routes_redirects_to_matches(client, db, calls):
     assert page.headers["cache-control"] == "no-store"
     assert her.handle in page.text
     assert uk("matches.contact_stub") in page.text
-    assert "88" not in page.text and "%" not in page.text
+    text = without_random_values(page.text, client, her.handle, me.handle)
+    assert not re.search(r"\b88\b", text) and "%" not in text
     assert len(calls) == 1
 
 

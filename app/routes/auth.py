@@ -8,12 +8,25 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.auth import CurrentUser, create_session, delete_all_sessions, end_session
-from app.config import CONSENT_VERSION, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
+from app.clientip import client_ip
+from app.config import (
+    CONSENT_VERSION,
+    LOGIN_FAILS_PER_HANDLE,
+    LOGIN_PER_IP,
+    PASSWORD_MAX_LENGTH,
+    PASSWORD_MIN_LENGTH,
+    RECOVER_FAILS_PER_HANDLE,
+    RECOVER_PER_IP,
+    REGISTER_PER_IP,
+)
 from app.csrf import rotate_csrf_token
 from app.db.session import get_db
+from app.eventlog import event
 from app.handles import generate_handle, is_generated_handle
 from app.i18n import Msg, msg
 from app.models import Invite, User
+from app.ratelimit import limiter
+from app.routes._limits import too_many
 from app.security import (
     generate_code,
     hash_invite_code,
@@ -32,6 +45,10 @@ FormStr = Annotated[str, Form()]
 INVALID_INVITE = msg("error.invalid_invite")
 INVALID_LOGIN = msg("error.invalid_login")
 INVALID_RECOVERY = msg("error.invalid_recovery")
+
+
+def _handle_key(handle: str) -> str:
+    return handle.strip().lower()
 
 
 def _password_errors(password: str, confirm: str) -> list[Msg]:
@@ -94,6 +111,9 @@ def register(
     age_confirmed: FormStr = "",
     consent: FormStr = "",
 ) -> Response:
+    wait = limiter.hit(REGISTER_PER_IP, client_ip(request))
+    if wait:
+        return too_many(request, REGISTER_PER_IP, wait, "rate.attempts")
     code = normalize_code(invite_code)
     if not code or _find_invite(db, code) is None:
         return render(request, "register_code.html", {"errors": [INVALID_INVITE]}, 400)
@@ -137,6 +157,7 @@ def register(
     invite.used_by = user.id
     invite.used_at = now
     db.commit()
+    event(request, "registered")
 
     rotate_csrf_token(request)
     context = {"user": user, "recovery_code": recovery_code}
@@ -154,12 +175,20 @@ def login_page(request: Request, user: CurrentUser) -> Response:
 
 @router.post("/login")
 def login(request: Request, db: Db, handle: FormStr = "", password: FormStr = "") -> Response:
+    handle_wait = limiter.retry_after(LOGIN_FAILS_PER_HANDLE, _handle_key(handle))
+    ip_wait = limiter.hit(LOGIN_PER_IP, client_ip(request))
+    if handle_wait or ip_wait:
+        rule = LOGIN_FAILS_PER_HANDLE if handle_wait else LOGIN_PER_IP
+        return too_many(request, rule, handle_wait or ip_wait, "rate.attempts")
     user = _find_user(db, handle)
     if not verify_secret(user.password_hash if user else None, password) or user is None:
+        limiter.record(LOGIN_FAILS_PER_HANDLE, _handle_key(handle))
+        event(request, "login_failed")
         return render(request, "login.html", {"errors": [INVALID_LOGIN]}, 400)
     if needs_rehash(user.password_hash):
         user.password_hash = hash_secret(password)
         db.commit()
+    event(request, "login_succeeded")
     rotate_csrf_token(request)
     response = _redirect_home()
     create_session(db, user, response)
@@ -190,12 +219,19 @@ def recover(
     password: FormStr = "",
     password_confirm: FormStr = "",
 ) -> Response:
+    handle_wait = limiter.retry_after(RECOVER_FAILS_PER_HANDLE, _handle_key(handle))
+    ip_wait = limiter.hit(RECOVER_PER_IP, client_ip(request))
+    if handle_wait or ip_wait:
+        rule = RECOVER_FAILS_PER_HANDLE if handle_wait else RECOVER_PER_IP
+        return too_many(request, rule, handle_wait or ip_wait, "rate.attempts")
     errors = _password_errors(password, password_confirm)
     if errors:
         return render(request, "recover.html", {"errors": errors}, 400)
     user = _find_user(db, handle)
     stored = user.recovery_code_hash if user else None
     if not verify_secret(stored, normalize_code(recovery_code)) or user is None:
+        limiter.record(RECOVER_FAILS_PER_HANDLE, _handle_key(handle))
+        event(request, "recovery_failed")
         return render(request, "recover.html", {"errors": [INVALID_RECOVERY]}, 400)
 
     new_code = generate_code()
@@ -203,6 +239,7 @@ def recover(
     user.recovery_code_hash = hash_secret(normalize_code(new_code))
     delete_all_sessions(db, user)
     db.commit()
+    event(request, "recovered")
 
     rotate_csrf_token(request)
     context = {"user": user, "recovery_code": new_code}

@@ -11,7 +11,7 @@ from app.config import FEED_PAGE_SIZE
 from app.handles import generate_handle
 from app.matching.feed import build_feed
 from app.models import Dislike, TestScore, User
-from tests.helpers import post, register, score_form, uk
+from tests.helpers import post, register, score_form, uk, without_random_values
 
 NOW = datetime(2026, 10, 18, tzinfo=UTC)
 
@@ -104,7 +104,8 @@ def test_feed_page_html_has_no_private_data(client, db):
             response = client.get(path, headers=headers)
             assert response.status_code == 200
             assert response.headers["cache-control"] == "no-store"
-            html = response.text
+            handles = db.scalars(select(User.handle)).all()
+            html = without_random_values(response.text, client, *handles)
             assert uk("feed.matched_on", axes=uk("axis.power")) in html
             for category in CATEGORIES:
                 assert not re.search(rf"\b{re.escape(category.name)}\b", html, re.IGNORECASE), (

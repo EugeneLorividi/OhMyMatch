@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}{{ t("account.title") }} · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>{{ t("account.title") }}</h1>
+  {% if notice %}<p class="notice" role="status">{{ tm(notice) }}</p>{% endif %}
+  <p>{{ t("account.links_intro") }} <a href="/profile">{{ t("nav.profile") }}</a> · <a href="/result">{{ t("nav.result") }}</a> · <a href="/dislikes">{{ t("nav.dislikes") }}</a></p>
+
+  <section class="tab">
+    <h2>{{ t("account.password_title") }}</h2>
+    {% with errors = password_errors %}{% include "_errors.html" %}{% endwith %}
+    <form method="post" action="/account/password">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label for="current_password">{{ t("account.current_password") }}</label>
+      <input id="current_password" name="current_password" type="password" required maxlength="{{ password_max }}" autocomplete="current-password">
+      <label for="password">{{ t("recover.new_password", min=password_min) }}</label>
+      <input id="password" name="password" type="password" required minlength="{{ password_min }}" maxlength="{{ password_max }}" autocomplete="new-password">
+      <label for="password_confirm">{{ t("recover.new_password_confirm") }}</label>
+      <input id="password_confirm" name="password_confirm" type="password" required minlength="{{ password_min }}" maxlength="{{ password_max }}" autocomplete="new-password">
+      <button type="submit">{{ t("recover.submit") }}</button>
+    </form>
+  </section>
+
+  <section class="tab danger">
+    <h2>{{ t("account.delete_title") }}</h2>
+    <p>{{ t("account.delete_intro") }}</p>
+    {% with errors = delete_errors %}{% include "_errors.html" %}{% endwith %}
+    <form method="post" action="/account/delete">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label for="delete_password">{{ t("account.delete_password") }}</label>
+      <input id="delete_password" name="password" type="password" required maxlength="{{ password_max }}" autocomplete="current-password">
+      <button type="submit" class="danger">{{ t("account.delete_submit") }}</button>
+    </form>
+  </section>
+{% endblock %}

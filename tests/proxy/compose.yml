@@ -1,0 +1,62 @@
+# Per-IP rate limits behind a real nginx with X-Forwarded-For. Run: tests/proxy/run.sh
+# Synthetic credentials; every network is internal.
+name: ohmymatch-proxycheck
+
+x-app-env: &appenv
+  DATABASE_URL: postgresql+psycopg://pc:pc@db:5432/pc
+  SECRET_KEY: synthetic-proxy-check-key-not-a-secret
+
+services:
+  db:
+    image: postgres:17.11-alpine3.24
+    environment: {POSTGRES_USER: pc, POSTGRES_PASSWORD: pc, POSTGRES_DB: pc}
+    tmpfs: [/var/lib/postgresql/data]
+    networks: [back]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pc -d pc"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+  migrate:
+    image: ohmymatch-app
+    environment: *appenv
+    networks: [back]
+    command: ["alembic", "upgrade", "head"]
+  app:
+    image: ohmymatch-app
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      <<: *appenv
+      TRUSTED_PROXIES: "10.231.0.2"
+    networks:
+      back: {}
+      front: {ipv4_address: 10.231.0.3}
+  nginx:
+    image: nginx:1.30.6-alpine3.24
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      front: {ipv4_address: 10.231.0.2}
+      outside: {ipv4_address: 10.231.1.2}
+  client_a: &client
+    image: ohmymatch-test-tests
+    volumes:
+      - ./client.py:/check/client.py:ro
+    networks:
+      outside: {ipv4_address: 10.231.1.10}
+    entrypoint: ["python", "/check/client.py", "http://10.231.1.2:8080"]
+  client_b:
+    <<: *client
+    networks:
+      outside: {ipv4_address: 10.231.1.11}
+
+networks:
+  back:
+    internal: true
+  front:
+    internal: true
+    ipam: {config: [{subnet: 10.231.0.0/24}]}
+  outside:
+    internal: true
+    ipam: {config: [{subnet: 10.231.1.0/24}]}

@@ -1,10 +1,10 @@
 """Pure ASGI middleware that caps request body size before anything parses it."""
 
-from starlette.requests import cookie_parser
 from starlette.responses import PlainTextResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from app.i18n import LANG_COOKIE, negotiate, translate
+from app.i18n import translate
+from app.middleware import locale_from_scope
 
 
 class BodySizeLimit:
@@ -18,14 +18,9 @@ class BodySizeLimit:
             await self.app(scope, receive, send)
             return
         limit = self.per_path.get(scope["path"], self.default)
-        headers = {
-            name.decode("latin-1"): value.decode("latin-1") for name, value in scope["headers"]
-        }
-        locale = negotiate(
-            cookie_parser(headers.get("cookie", "")).get(LANG_COOKIE),
-            headers.get("accept-language"),
+        too_large = PlainTextResponse(
+            translate(locale_from_scope(scope), "error.too_large"), status_code=413
         )
-        too_large = PlainTextResponse(translate(locale, "error.too_large"), status_code=413)
         for name, value in scope["headers"]:
             if name == b"content-length" and (not value.isdigit() or int(value) > limit):
                 await too_large(scope, receive, send)

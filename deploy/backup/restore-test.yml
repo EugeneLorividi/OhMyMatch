@@ -1,0 +1,61 @@
+# Throwaway setup for deploy/backup/restore-test.sh. Synthetic data and keys only.
+name: ohmymatch-restoretest
+
+x-db: &db
+  image: postgres:17.11-alpine3.24
+  environment:
+    POSTGRES_USER: rt
+    POSTGRES_PASSWORD: rt
+    POSTGRES_DB: rt
+  tmpfs:
+    - /var/lib/postgresql/data
+  networks: [rt]
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U rt -d rt"]
+    interval: 2s
+    timeout: 3s
+    retries: 15
+
+x-tool: &tool
+  image: ohmymatch-backup
+  networks: [rt]
+  environment: &toolenv
+    PGUSER: rt
+    PGPASSWORD: rt
+    PGDATABASE: rt
+    RETENTION_DAYS: "14"
+
+services:
+  src: *db
+  dst: *db
+  migrate:
+    image: ohmymatch-app
+    networks: [rt]
+    environment:
+      DATABASE_URL: postgresql+psycopg://rt:rt@src:5432/rt
+      SECRET_KEY: synthetic-restore-test-key-not-a-secret
+    command: ["alembic", "upgrade", "head"]
+  keys:
+    <<: *tool
+    command: ["true"]
+  backup:
+    <<: *tool
+    environment:
+      <<: *toolenv
+      PGHOST: src
+    volumes:
+      - ${RT_DIR}:/backups
+      - ${RT_DIR}/recipients.txt:/keys/recipients.txt:ro
+    command: ["backup.sh"]
+  restore:
+    <<: *tool
+    environment:
+      <<: *toolenv
+      PGHOST: dst
+    volumes:
+      - ${RT_DIR}:/backups:ro
+      - ${RT_DIR}/identity.txt:/keys/identity.txt:ro
+
+networks:
+  rt:
+    internal: true

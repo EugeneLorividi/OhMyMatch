@@ -2,6 +2,7 @@
 
 import io
 import threading
+import warnings
 from collections.abc import Iterable
 from dataclasses import dataclass
 
@@ -26,6 +27,13 @@ from app.config import (
 )
 from app.i18n import Msg, msg
 from app.parsing.text_parser import ParseResult, normalize_name, split_line
+
+# Pillow's own decompression-bomb guard uses the same limit; load_image checks the declared
+# size from the header before any pixel data is decoded.
+Image.MAX_IMAGE_PIXELS = OCR_MAX_INPUT_PIXELS
+# Between 1x and 2x the limit Pillow only warns (to stderr); load_image rejects those images
+# itself, so the warning would just be an extra log line.
+warnings.filterwarnings("ignore", category=Image.DecompressionBombWarning)
 
 # At most OCR_CONCURRENCY recognitions at once, process-wide.
 slots = threading.BoundedSemaphore(OCR_CONCURRENCY)
@@ -88,7 +96,9 @@ def load_image(data: bytes) -> Image.Image:
             raise ImageRejected("error.image_pixels")
         image = ImageOps.exif_transpose(image)
         pixels = image.convert("RGB")
-    except (UnidentifiedImageError, Image.DecompressionBombError, OSError, SyntaxError) as exc:
+    except Image.DecompressionBombError as exc:  # declared size far above the limit
+        raise ImageRejected("error.image_pixels") from exc
+    except (UnidentifiedImageError, OSError, SyntaxError) as exc:
         raise ImageRejected("error.image_broken") from exc
     # Rebuild from raw pixels so no metadata survives.
     return Image.frombytes("RGB", pixels.size, pixels.tobytes())

@@ -72,3 +72,15 @@ def uk(key: str, **params) -> str:
     from app.i18n import translate
 
     return translate("uk", key, **params)
+
+
+def without_random_values(html: str, client, *handles: str) -> str:
+    """Full HTML minus values that are random by design (CSRF token, UUIDs, nicknames with
+    their two-digit numbers), so leak checks can look at attributes without false alarms."""
+    import re
+
+    token = client.cookies.get(CSRF_COOKIE)
+    for value in (token, *handles):
+        if value:
+            html = html.replace(value, "")
+    return re.sub(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "", html)

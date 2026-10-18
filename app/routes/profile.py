@@ -9,11 +9,13 @@ from starlette.datastructures import FormData
 from app.accounts import refresh_is_active
 from app.auth import RequiredUser
 from app.categories import CATEGORIES, CATEGORY_KEYS
-from app.config import GENDERS, MODES
+from app.config import DISLIKES_SAVES_PER_USER, GENDERS, MODES, PROFILE_SAVES_PER_USER
 from app.db.session import get_db
 from app.forms import form_data
 from app.i18n import msg
 from app.models import Dislike
+from app.ratelimit import limiter
+from app.routes._limits import too_many
 from app.templating import render
 
 router = APIRouter()
@@ -42,6 +44,11 @@ def profile_page(request: Request, user: RequiredUser) -> Response:
 
 @router.post("/profile")
 def save_profile(request: Request, user: RequiredUser, db: Db, form: Form) -> Response:
+    wait = limiter.retry_after(PROFILE_SAVES_PER_USER, str(user.id))
+    if wait:
+        return too_many(
+            request, PROFILE_SAVES_PER_USER, wait, "rate.changes", user, back="/profile"
+        )
     gender = form.get("gender")
     seeking = form.getlist("seeking")
     mode = form.get("mode")
@@ -61,6 +68,7 @@ def save_profile(request: Request, user: RequiredUser, db: Db, form: Form) -> Re
     user.mode = mode
     refresh_is_active(db, user)
     db.commit()
+    limiter.record(PROFILE_SAVES_PER_USER, str(user.id))
     return RedirectResponse("/", status_code=303)
 
 
@@ -76,6 +84,10 @@ def dislikes_page(request: Request, user: RequiredUser, db: Db) -> Response:
 
 @router.post("/dislikes")
 def save_dislikes(request: Request, user: RequiredUser, db: Db, form: Form) -> Response:
+    wait = limiter.retry_after(DISLIKES_SAVES_PER_USER, str(user.id))
+    if wait:
+        rule = DISLIKES_SAVES_PER_USER
+        return too_many(request, rule, wait, "rate.changes", user, back="/dislikes")
     chosen = form.getlist("category")
     if not set(chosen) <= set(CATEGORY_KEYS):
         context = {
@@ -88,4 +100,5 @@ def save_dislikes(request: Request, user: RequiredUser, db: Db, form: Form) -> R
     db.execute(delete(Dislike).where(Dislike.user_id == user.id))
     db.add_all(Dislike(user_id=user.id, category_key=key) for key in set(chosen))
     db.commit()
+    limiter.record(DISLIKES_SAVES_PER_USER, str(user.id))
     return RedirectResponse("/", status_code=303)

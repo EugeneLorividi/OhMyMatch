@@ -45,3 +45,5 @@ select = ["E", "F", "W", "I", "UP", "B", "S", "SIM"]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
 markers = ["slow: performance checks"]
+# Mirrors the filter in app/parsing/ocr_parser.py (pytest resets filters per test).
+filterwarnings = ["ignore::PIL.Image.DecompressionBombWarning"]

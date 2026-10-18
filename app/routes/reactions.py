@@ -6,10 +6,14 @@ from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from app.auth import RequiredUser
+from app.config import REACTIONS_PER_USER
 from app.db.session import get_db
+from app.eventlog import event
 from app.i18n import msg
 from app.models.reaction import KINDS
+from app.ratelimit import limiter
 from app.reactions import Outcome, Unavailable, matches_of, react, remove_match
+from app.routes._limits import too_many
 from app.templating import render
 
 router = APIRouter()
@@ -30,7 +34,7 @@ def _is_htmx(request: Request) -> bool:
 
 
 def _message_page(request: Request, user, key: str, status_code: int) -> Response:
-    context = {"user": user, "message": msg(key)}
+    context = {"user": user, "message": msg(key), "back": "/feed"}
     return render(request, "message.html", context, status_code, no_store=True)
 
 
@@ -48,6 +52,10 @@ def post_reaction(
         target_id = None
     if kind not in KINDS:
         return _message_page(request, user, "error.bad_reaction", 400)
+    wait = limiter.hit(REACTIONS_PER_USER, str(user.id))
+    if wait:
+        rule = REACTIONS_PER_USER
+        return too_many(request, rule, wait, "rate.reactions", user, _is_htmx(request), "/feed")
     try:
         if target_id is None:
             raise Unavailable
@@ -58,6 +66,8 @@ def post_reaction(
                 request, "_reaction_done.html", {"message": msg("error.candidate_unavailable")}
             )
         return _message_page(request, user, "error.candidate_unavailable", 404)
+    if outcome is Outcome.MATCHED:
+        event(request, "match_created")
     if _is_htmx(request):
         context = {"message": msg(OUTCOME_KEYS[outcome]), "matched": outcome is Outcome.MATCHED}
         return render(request, "_reaction_done.html", context, no_store=True)
@@ -74,4 +84,5 @@ def matches_page(request: Request, user: RequiredUser, db: Db) -> Response:
 def remove(request: Request, user: RequiredUser, db: Db, match_id: uuid.UUID) -> Response:
     if not remove_match(db, user, match_id):
         return _message_page(request, user, "error.match_not_found", 404)
+    event(request, "match_removed")
     return RedirectResponse("/matches", status_code=303)

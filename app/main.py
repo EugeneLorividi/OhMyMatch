@@ -7,9 +7,11 @@ from fastapi.staticfiles import StaticFiles
 from app.auth import LoginRequired
 from app.config import MAX_BODY_BYTES, MAX_UPLOAD_BODY_BYTES, settings
 from app.csrf import CsrfFailed, set_csrf_cookie, verify_csrf
+from app.eventlog import event
 from app.i18n import get_locale, translate
 from app.limits import BodySizeLimit
-from app.routes import auth, feed, lang, pages, profile, reactions, result
+from app.middleware import RequestContext, SecurityHeaders
+from app.routes import account, auth, feed, lang, pages, privacy, profile, reactions, result
 
 app = FastAPI(
     docs_url=None,
@@ -28,6 +30,8 @@ ROUTERS = (
     result.router,
     feed.router,
     reactions.router,
+    account.router,
+    privacy.router,
 )
 for router in ROUTERS:
     app.include_router(router)
@@ -40,16 +44,20 @@ async def csrf_cookie(request: Request, call_next):
     return response
 
 
-# Added last, so it is the outermost layer and runs before any body parsing.
+# Starlette puts the last added middleware outermost. Order, outside in:
+# RequestContext (request id, error containment), SecurityHeaders, BodySizeLimit.
 app.add_middleware(
     BodySizeLimit,
     default=MAX_BODY_BYTES,
     per_path={"/result/parse-image": MAX_UPLOAD_BODY_BYTES},
 )
+app.add_middleware(SecurityHeaders)
+app.add_middleware(RequestContext)
 
 
 @app.exception_handler(CsrfFailed)
 async def csrf_failed(request: Request, exc: CsrfFailed) -> PlainTextResponse:
+    event(request, "csrf_failed")
     return PlainTextResponse(translate(get_locale(request), "error.csrf"), status_code=403)
 
 

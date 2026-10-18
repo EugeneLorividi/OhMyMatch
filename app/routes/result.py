@@ -8,13 +8,22 @@ from starlette.datastructures import FormData, UploadFile
 from app.accounts import refresh_is_active
 from app.auth import RequiredUser
 from app.categories import CATEGORIES, CATEGORY_KEYS
-from app.config import OCR_MAX_FILE_BYTES, OCR_MAX_FILES, OCR_QUEUE_WAIT_SECONDS, PASTE_MAX_CHARS
+from app.config import (
+    OCR_MAX_FILE_BYTES,
+    OCR_MAX_FILES,
+    OCR_PER_USER,
+    OCR_QUEUE_WAIT_SECONDS,
+    PASTE_MAX_CHARS,
+    RESULT_SAVES_PER_USER,
+)
 from app.db.session import get_db
 from app.forms import form_data
 from app.i18n import Msg, msg
 from app.models import TestScore, User
 from app.parsing import ocr_parser
 from app.parsing.text_parser import parse_text
+from app.ratelimit import limiter
+from app.routes._limits import too_many
 from app.templating import render
 
 router = APIRouter()
@@ -81,6 +90,9 @@ def parse_result_image(request: Request, user: RequiredUser, form: Form) -> Resp
     if len(uploads) > OCR_MAX_FILES:
         error = msg("error.too_many_images", max=OCR_MAX_FILES)
         return _result_page(request, user, {}, errors=[error], status_code=400)
+    wait = limiter.hit(OCR_PER_USER, str(user.id))
+    if wait:
+        return too_many(request, OCR_PER_USER, wait, "rate.ocr", user, back="/result")
     blobs = [upload.file.read(OCR_MAX_FILE_BYTES + 1) for upload in uploads]
 
     if not ocr_parser.slots.acquire(timeout=OCR_QUEUE_WAIT_SECONDS):
@@ -121,6 +133,9 @@ def _read_scores(form: FormData) -> tuple[dict[str, int | str], dict[str, int], 
 
 @router.post("/result/save")
 def save_result(request: Request, user: RequiredUser, db: Db, form: Form) -> Response:
+    wait = limiter.retry_after(RESULT_SAVES_PER_USER, str(user.id))
+    if wait:
+        return too_many(request, RESULT_SAVES_PER_USER, wait, "rate.changes", user, back="/result")
     shown, scores, invalid = _read_scores(form)
     if invalid:
         error = msg("error.scores_invalid")
@@ -133,4 +148,5 @@ def save_result(request: Request, user: RequiredUser, db: Db, form: Form) -> Res
     db.flush()
     refresh_is_active(db, user)
     db.commit()
+    limiter.record(RESULT_SAVES_PER_USER, str(user.id))
     return RedirectResponse("/", status_code=303)

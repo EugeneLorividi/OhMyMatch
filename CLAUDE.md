@@ -1,12 +1,12 @@
 # OhMyMatch: rules for Claude Code
 
-Spec: docs/SPEC.uk.md. It is the source of truth. Follow section 12 stage by stage.
+Spec: docs/SPEC.uk.md is the spec and the source of truth, written in Ukrainian. Follow section 12 stage by stage. If the spec changes, change docs/SPEC.uk.md only.
 
 ## Workflow
 - Work on ONE stage at a time. Run tests and ruff before finishing a stage. Do not start the next stage until tests are green.
 - Commit after each stage. Commit messages in English, imperative mood, up to ~50 chars (e.g. "Add FastAPI skeleton").
 - Never run `git push` unless the user asks. Never rewrite pushed history.
-- Code, comments, identifiers, docs, commit messages and tests: English.
+- docs/SPEC.uk.md is written in Ukrainian; every other doc, README, code, comments, identifiers, tests and commit messages stay English.
 - UI: Ukrainian and English only, through i18n (both languages say the same thing).
 - Never write Russian anywhere: code, comments, docs, UI, tests, fixtures, nickname lists.
 

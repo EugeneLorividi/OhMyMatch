@@ -8,7 +8,8 @@ License: AGPL-3.0 (see `LICENSE`).
 
 ## Languages
 - UI: Ukrainian (default) and English. All UI strings are in `app/locales/uk.json` and `app/locales/en.json`; both files must have the same keys.
-- Code, comments, docs, tests and commit messages: English.
+- `docs/SPEC.uk.md` is the spec and the source of truth, written in Ukrainian; if the spec changes, change only that file.
+- Every other doc, this README, code, comments, tests and commit messages: English.
 - No Russian anywhere in the repository; `tests/test_no_russian.py` guards this.
 
 ## Stack

@@ -13,7 +13,7 @@ from app.matching.explain import explain
 from app.matching.filters import passes_filters
 from app.matching.profile import Profile
 from app.matching.scoring import MatchScore, score_match
-from app.models import Dislike, TestScore, User
+from app.models import Dislike, Reaction, TestScore, User
 
 
 @dataclass(frozen=True)
@@ -53,7 +53,8 @@ def _profiles(db: Session, rows) -> list[Profile]:
     ]
 
 
-def load_viewer(db: Session, user: User) -> Profile | None:
+def load_profile(db: Session, user: User) -> Profile | None:
+    """Matching profile of an active user, None if the user does not take part."""
     if not user.is_active:
         return None
     scores = db.scalar(select(TestScore.scores).where(TestScore.user_id == user.id))
@@ -79,8 +80,12 @@ def load_candidates(db: Session, viewer: Profile) -> tuple[list[Profile], dict[u
 
 
 def excluded_ids(db: Session, viewer: Profile) -> frozenset[uuid.UUID]:
-    """Candidates hidden by reactions. Reactions arrive in stage 6; until then nobody is."""
-    return frozenset()
+    """Hidden by reactions: anyone the viewer reacted to, and anyone who blocked the viewer."""
+    mine = select(Reaction.to_user).where(Reaction.from_user == viewer.id)
+    blocked_me = select(Reaction.from_user).where(
+        Reaction.to_user == viewer.id, Reaction.kind == "block"
+    )
+    return frozenset(db.scalars(mine.union(blocked_me)))
 
 
 def tie_key(viewer_id: uuid.UUID, candidate_id: uuid.UUID, day: date) -> bytes:
@@ -107,7 +112,7 @@ def rank(
 
 
 def build_feed(db: Session, user: User, page: int, day: date | None = None) -> FeedPage | None:
-    viewer = load_viewer(db, user)
+    viewer = load_profile(db, user)
     if viewer is None:
         return None
     candidates, handles = load_candidates(db, viewer)

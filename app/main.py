@@ -9,7 +9,7 @@ from app.config import MAX_BODY_BYTES, MAX_UPLOAD_BODY_BYTES, settings
 from app.csrf import CsrfFailed, set_csrf_cookie, verify_csrf
 from app.i18n import get_locale, translate
 from app.limits import BodySizeLimit
-from app.routes import auth, feed, lang, pages, profile, result
+from app.routes import auth, feed, lang, pages, profile, reactions, result
 
 app = FastAPI(
     docs_url=None,
@@ -20,7 +20,15 @@ app = FastAPI(
 )
 app.state.settings = settings
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
-ROUTERS = (pages.router, lang.router, auth.router, profile.router, result.router, feed.router)
+ROUTERS = (
+    pages.router,
+    lang.router,
+    auth.router,
+    profile.router,
+    result.router,
+    feed.router,
+    reactions.router,
+)
 for router in ROUTERS:
     app.include_router(router)
 

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ t("matches.title") }} · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>{{ t("matches.title") }}</h1>
+  {% for match, partner in matches %}
+    <article class="card">
+      <h2 class="handle">{{ partner.handle }}</h2>
+      <p class="muted">{{ t("matches.since", date=match.created_at.date().isoformat()) }}</p>
+      <p>{{ t("matches.contact_stub") }}</p>
+      <form method="post" action="/matches/{{ match.id }}/remove">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="secondary">{{ t("matches.remove") }}</button>
+      </form>
+    </article>
+  {% else %}
+    <p>{{ t("matches.empty") }}</p>
+  {% endfor %}
+  {% if matches %}<p class="muted">{{ t("matches.remove_hint") }}</p>{% endif %}
+{% endblock %}

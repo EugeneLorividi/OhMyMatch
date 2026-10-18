@@ -4,6 +4,13 @@
     <h2 class="handle">{{ card.handle }}</h2>
     {% if card.matched %}<p>{{ t("feed.matched_on", axes=axes(card.matched)) }}</p>{% endif %}
     {% if card.curious %}<p class="muted">{{ t("feed.could_try", axes=axes(card.curious)) }}</p>{% endif %}
+    <form method="post" action="/react" class="reactions" hx-post="/react" hx-target="closest .card" hx-swap="outerHTML">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="target" value="{{ card.public_id }}">
+      <button type="submit" name="kind" value="like">{{ t("feed.like") }}</button>
+      <button type="submit" name="kind" value="pass" class="secondary">{{ t("feed.pass") }}</button>
+      <button type="submit" name="kind" value="block" class="secondary">{{ t("feed.block") }}</button>
+    </form>
   </article>
 {% else %}
   {% if feed.page == 1 %}

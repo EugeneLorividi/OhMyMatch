@@ -30,3 +30,6 @@ textarea { width: 100%; font: 0.9rem/1.4 ui-monospace, monospace; padding: 0.5re
 [hidden] { display: none !important; }
 .card { border: 1px solid #8884; border-radius: 6px; padding: 0.25rem 1rem; margin: 0.75rem 0; }
 .card h2 { font-size: 1.1rem; }
+.reactions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+.reactions button { margin-top: 0; }
+.card.done { opacity: 0.8; }

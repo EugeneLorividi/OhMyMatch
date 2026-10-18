@@ -97,3 +97,17 @@ One line per decision. Newest at the bottom of each stage.
 
 ## Deviations
 - Recovery codes have ~78 bits of entropy (16 symbols from a 30-symbol alphabet), below the usual 128-bit guidance for long-lived secrets. Accepted for typability; mitigated by argon2id hashing (offline guessing is slow) and by per-handle and per-IP limits on `/recover` (stage 7). Revisit if codes ever need to resist offline attacks without the hash cost.
+
+## Stage 6: reactions and matches
+- `matches` has a random UUID `id` (plus unique `(user_a, user_b)` and CHECK `user_a < user_b`): section 6 lists only the pair, but sections 8 and 10 address a match by id (`/matches/{id}/remove`, `on_match(match_id)`).
+- `reactions`: PK `(from_user, to_user)`, index on `to_user`, CHECK on `kind` and `from_user <> to_user`; both FKs cascade.
+- Buttons map to kinds: "Like" = like, "Skip" = pass, "Don't show again" = block; the feed says that the last one hides both people from each other.
+- Only a block replaces an earlier reaction; any other repeat is a no-op ("already reacted").
+- A like requires the same eligibility as the feed (filters, no block either way, a strict working direction), so stored ids cannot be used to bypass the filters. Missing, self and ineligible targets all get the same "not available" answer.
+- Two likes in the same pair are serialized with `pg_advisory_xact_lock` on the ordered pair, so simultaneous likes create exactly one match (tested with two threads).
+- `ContactGateway.on_match(match_id)` (no-op) runs once, after the match is committed.
+- Removing a match deletes it and upserts a block in both directions; only a participant can remove it, others get 404.
+- Feed exclusions: everyone the viewer reacted to, plus everyone who blocked the viewer.
+- The public candidate id in the feed is `users.id` (a random UUID), as section 10 allows.
+- HTMX: reaction buttons replace the card with a short status; without JS the form posts and redirects to the feed (or to matches on a new match). HTMX errors come back as 200 fragments so HTMX swaps them.
+- The matches page shows the partner's handle, the match date and the contact stub; nothing about scores.

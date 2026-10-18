@@ -153,3 +153,29 @@ def test_csrf_and_size_errors_are_translated(client):
     )
     assert body.status_code == 413
     assert body.text == translate("en", "error.too_large")
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "status", "key"),
+    [
+        ("GET", "/nope", 404, "error.not_found"),
+        ("GET", "/lang/ru", 404, "error.not_found"),
+        ("GET", "/static/missing.css", 404, "error.not_found"),
+        ("PUT", "/login", 405, "error.method_not_allowed"),
+    ],
+)
+@pytest.mark.parametrize("locale", LOCALES)
+def test_framework_errors_are_translated_pages(client, locale, method, path, status, key):
+    client.cookies.set(LANG_COOKIE, locale)
+    response = client.request(method, path)
+    assert response.status_code == status
+    assert response.headers["content-type"].startswith("text/html")
+    assert translate(locale, key) in response.text
+    assert '"detail"' not in response.text
+
+
+def test_validation_error_is_a_translated_page(client, db):
+    register(client, db)
+    response = client.get("/feed?page=0")
+    assert response.status_code == 422
+    assert translate("uk", "error.bad_request") in response.text

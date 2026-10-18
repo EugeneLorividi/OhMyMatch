@@ -1,17 +1,20 @@
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.auth import LoginRequired
 from app.config import MAX_BODY_BYTES, MAX_UPLOAD_BODY_BYTES, settings
 from app.csrf import CsrfFailed, set_csrf_cookie, verify_csrf
 from app.eventlog import event
-from app.i18n import get_locale, translate
+from app.i18n import get_locale, msg, translate
 from app.limits import BodySizeLimit
 from app.middleware import RequestContext, SecurityHeaders
 from app.routes import account, auth, feed, lang, pages, privacy, profile, reactions, result
+from app.templating import render
 
 app = FastAPI(
     docs_url=None,
@@ -64,3 +67,20 @@ async def csrf_failed(request: Request, exc: CsrfFailed) -> PlainTextResponse:
 @app.exception_handler(LoginRequired)
 async def login_required(request: Request, exc: LoginRequired) -> RedirectResponse:
     return RedirectResponse("/login", status_code=303)
+
+
+ERROR_KEYS = {404: "error.not_found", 405: "error.method_not_allowed"}
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error(request: Request, exc: StarletteHTTPException):
+    """Framework errors (unknown page, wrong method) as translated pages, not English JSON."""
+    key = ERROR_KEYS.get(exc.status_code, "error.request_failed")
+    context = {"user": None, "message": msg(key), "back": "/"}
+    return render(request, "message.html", context, exc.status_code)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(request: Request, exc: RequestValidationError):
+    context = {"user": None, "message": msg("error.bad_request"), "back": "/"}
+    return render(request, "message.html", context, 422)

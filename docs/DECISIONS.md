@@ -21,13 +21,13 @@ One line per decision. Newest at the bottom of each stage.
 - Session lifetime is 7 days (`SESSION_TTL`); expired sessions are deleted on access and on login.
 - Cookies use the `__Host-` prefix: Secure, HttpOnly, SameSite=Lax, Path=/.
 - CSRF: double-submit token in a `__Host-csrf` cookie, checked by an app-wide dependency on every non-GET request; accepted from form field `csrf_token` or header `X-CSRF-Token` (HTMX via `hx-headers` on `<body>`). Rotated on login, logout, registration and recovery.
-- Invite and recovery codes: 16 chars from a 30-char unambiguous alphabet (~78 bits), shown as `XXXX-XXXX-XXXX-XXXX`, case/dash insensitive.
+- Invite and recovery codes: 16 chars from a 30-char unambiguous alphabet (~78 bits), shown as `XXXX-XXXX-XXXX-XXXX`, case/dash insensitive. See the deviation below for recovery codes.
 - Invite codes are stored as SHA-256 (high entropy, looked up by hash); passwords and recovery codes as argon2id.
 - Handles are `adjective-noun-NN` from fixed word lists; the server only accepts strings that match the generator, so no free text gets in.
 - Registration is two steps: invite code, then 18+, consent, handle, password; the invite is re-checked under `SELECT ... FOR UPDATE` at the final step.
 - Password length 10 to 128 chars, no other composition rules.
 - Login and recovery errors are identical for unknown handles and wrong secrets; a dummy argon2 verify keeps timing similar.
-- `CONSENT_VERSION = "2026-10-18"`; consent text lives in `templates/_consent.html` and will be reused by `/privacy` in stage 7.
+- `CONSENT_VERSION = "2026-10-18"`; consent text lives in `templates/_consent.html` and will be reused by `/privacy` in stage 7. (Bumped later, see Languages.)
 - Password change (`POST /account/password`) is deferred to stage 7 together with account deletion on the settings page.
 - Rate limits for login, registration and recovery are deferred to stage 7 as the spec plans.
 - Tests run against real PostgreSQL: `compose.test.yml` (tmpfs, 127.0.0.1:55432, synthetic credentials) locally, a service container in CI. Tests refuse to run without `TEST_DATABASE_URL`.
@@ -43,7 +43,7 @@ One line per decision. Newest at the bottom of each stage.
 - Paste limited to 20 000 chars; the pasted text is never echoed back or stored.
 - `test_scores` CHECK: value is a JSON object and every value is an integer 0..100 (via `jsonb_path_exists`); the set of keys is validated in the app.
 - No DB CHECK on gender, seeking or dislike keys: their value sets live in `config.py` / `categories.py` and change without migrations.
-- Gender keys `man`, `woman`, `other` (labels in Russian, in `config.GENDERS`); `seeking` needs at least one value.
+- Gender keys `man`, `woman`, `other` (`config.GENDERS`; labels are locale keys `gender.<key>`); `seeking` needs at least one value.
 - `is_active` is recomputed on profile and result save: true when gender, seeking and scores are all present.
 - Pages are plain server-rendered forms (no HTMX yet); HTMX gets vendored when the feed needs it.
 - The screenshot tab shows a placeholder until stage 4.
@@ -72,10 +72,28 @@ One line per decision. Newest at the bottom of each stage.
 - Gender filter runs in SQL (`gender IN viewer.seeking AND viewer.gender = ANY(seeking)`) and again in Python, so the pure filter stays mutual and testable.
 - Curiosity bounds: `CURIOUS_LOW <= lower < ACTIVE_THRESHOLD` and the higher value `>= ACTIVE_THRESHOLD`; the viewer's mode decides both the curiosity zone and the weights, so A's score for B can differ from B's for A (filters stay mutual).
 - A pair counts in the role_fit denominator if either person has either side active, using effective (post-Switch) scores.
-- Explanation lists only role axes: strict axes first ("совпали по"), then curiosity-only axes ("можно попробовать"), at most 5 in total, ranked by strength then spec order. The style axis is not listed: the spec gives no threshold for it.
+- Explanation lists only role axes: strict axes first ("matched on"), then curiosity-only axes ("could try"), at most 5 in total, ranked by strength then spec order. The style axis is not listed: the spec gives no threshold for it.
 - Tie order: SHA-256 of viewer id, UTC date and candidate id. Random, but stable within a day.
 - Reaction filters (blocks, likes, passes) are wired through `excluded_ids()`, which returns nothing until the reactions table arrives in stage 6.
 - Feed paging uses `?page=N` (1..1000); HTMX requests get the fragment, plain requests the full page. Feed responses are `no-store`.
 - The card carries only the handle and axis labels. Like/pass/block buttons come with `POST /react` in stage 6.
 - Daily feed page limit (20) is deferred to stage 7 with the other limits.
 - Performance check: 1000 active synthetic users, feed built in ~40 ms locally (test asserts < 500 ms, median of 3).
+
+## Languages (after stage 5)
+- Project rule: no Russian anywhere in the repository. Code, docs, tests and commit messages are English; the UI is Ukrainian and English only.
+- `docs/TZ.md` translated to English as `docs/SPEC.md`, section numbering and meaning unchanged; the original stays in git history (it was already pushed, history is not rewritten).
+- All UI strings live in `app/locales/uk.json` and `app/locales/en.json` (flat keys, `str.format` placeholders). Code returns message keys (`Msg`) and templates translate them, so parsers and routes contain no UI text.
+- Language: `__Host-lang` cookie (`uk` or `en`, nothing else; Secure, HttpOnly, SameSite=Lax, 1 year), else `Accept-Language` by q-value, else `uk`. Switch via `GET /lang/{code}?next=<path>`; `next` accepts only same-site paths (no open redirect).
+- 403 (CSRF) and 413 (body too large) responses are translated too; the body-limit middleware negotiates the language from raw headers.
+- Axis, gender and mode labels are locale keys (`axis.*`, `gender.*`, `mode.*`); `categories.Axis` no longer carries a label.
+- `CONSENT_VERSION` bumped to `2026-10-18.2` because the consent text changed. Both languages say the same thing.
+- Consent text now says IP addresses are not stored "in the database" (spec section 9 wording); stage 7 adds in-memory per-IP rate limiting and the privacy page explains it.
+- UI tells users to take the test in the English version of bdsmtest.org: categories are matched by their English names.
+- Parser aliases were already English spelling variants only; no Russian aliases existed. bdsmtest.org Ukrainian localisation could not be confirmed (the site returns 403 to automated fetches; searches found no language list), so no Ukrainian aliases were added.
+- Nickname word lists were already English only.
+- Guard test fails if any tracked file contains the Russian-only letters (yery, e, hard sign, yo, both cases); the test file builds them from code points. It cannot detect Russian text that avoids those four letters, so new UI text goes only into the locale files.
+- Tests check that both locales have the same keys and placeholders, and that every key used in code and templates exists.
+
+## Deviations
+- Recovery codes have ~78 bits of entropy (16 symbols from a 30-symbol alphabet), below the usual 128-bit guidance for long-lived secrets. Accepted for typability; mitigated by argon2id hashing (offline guessing is slow) and by per-handle and per-IP limits on `/recover` (stage 7). Revisit if codes ever need to resist offline attacks without the hash cost.

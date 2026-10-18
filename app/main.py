@@ -8,7 +8,7 @@ from app.auth import LoginRequired
 from app.config import MAX_BODY_BYTES, MAX_UPLOAD_BODY_BYTES, settings
 from app.csrf import set_csrf_cookie, verify_csrf
 from app.limits import BodySizeLimit
-from app.routes import auth, pages, profile, result
+from app.routes import auth, feed, pages, profile, result
 
 app = FastAPI(
     docs_url=None,
@@ -19,7 +19,7 @@ app = FastAPI(
 )
 app.state.settings = settings
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
-ROUTERS = (pages.router, auth.router, profile.router, result.router)
+ROUTERS = (pages.router, auth.router, profile.router, result.router, feed.router)
 for router in ROUTERS:
     app.include_router(router)
 

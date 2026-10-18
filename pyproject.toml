@@ -39,8 +39,9 @@ extend-exclude = ["migrations/versions"]
 select = ["E", "F", "W", "I", "UP", "B", "S", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106"]
+"tests/**" = ["S101", "S105", "S106", "S311"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+markers = ["slow: performance checks"]

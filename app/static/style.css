@@ -28,3 +28,5 @@ textarea { width: 100%; font: 0.9rem/1.4 ui-monospace, monospace; padding: 0.5re
 .tab { border: 1px solid #8884; padding: 0 1rem 1rem; margin: 1rem 0; }
 .warning { border: 2px solid var(--error); padding: 0.5rem 0.75rem; font-weight: 600; }
 [hidden] { display: none !important; }
+.card { border: 1px solid #8884; border-radius: 6px; padding: 0.25rem 1rem; margin: 0.75rem 0; }
+.card h2 { font-size: 1.1rem; }

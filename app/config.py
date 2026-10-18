@@ -46,3 +46,14 @@ OCR_TESSERACT_TIMEOUT_SECONDS = 20
 # Request body limits; nginx enforces the same outside.
 MAX_BODY_BYTES = 1024 * 1024
 MAX_UPLOAD_BODY_BYTES = 25 * 1024 * 1024
+
+# Matching (section 7). Hypotheses, tuned after launch.
+ACTIVE_THRESHOLD = 65
+CURIOUS_LOW = 30
+CURIOUS_FACTOR = 0.5
+NONMONO_LOW = 35
+# (WEIGHT_ROLES, WEIGHT_STYLE) by the viewer's mode
+WEIGHTS: dict[str, tuple[float, float]] = {"normal": (0.75, 0.25), "experimental": (0.6, 0.4)}
+PAIR_WEIGHTS: dict[tuple[str, str], float] = {}  # default weight 1 for every pair
+FEED_PAGE_SIZE = 20
+EXPLAIN_MAX_AXES = 5

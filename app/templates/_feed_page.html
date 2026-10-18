@@ -1,0 +1,16 @@
+{% for card in feed.cards %}
+  <article class="card">
+    <h2 class="handle">{{ card.handle }}</h2>
+    {% if card.matched %}<p>Совпали по: {{ card.matched | join(", ") }}</p>{% endif %}
+    {% if card.curious %}<p class="muted">Можно попробовать: {{ card.curious | join(", ") }}</p>{% endif %}
+  </article>
+{% else %}
+  {% if feed.page == 1 %}
+    <p>Пока никого не нашлось. Загляни позже: лента пересчитывается при каждом открытии.</p>
+  {% endif %}
+{% endfor %}
+{% if feed.has_next %}
+  <p class="more">
+    <a href="/feed?page={{ feed.page + 1 }}" hx-get="/feed?page={{ feed.page + 1 }}" hx-target="closest .more" hx-swap="outerHTML">Показать ещё</a>
+  </p>
+{% endif %}

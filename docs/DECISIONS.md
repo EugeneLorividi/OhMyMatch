@@ -65,3 +65,17 @@ One line per decision. Newest at the bottom of each stage.
 - Body size limit middleware (pure ASGI, outermost): 1 MiB by default, 25 MiB on `/result/parse-image`, same as nginx. Overflow returns 413 even for chunked bodies.
 - Wait indicator: tiny same-origin `static/app.js` (shows the indicator, disables submit). No HTMX yet.
 - Synthetic OCR fixtures are rendered at test time with Pillow's built-in font; no image files are committed.
+
+## Stage 5: matching
+- HTMX 2.0.11 vendored as `static/vendor/htmx-2.0.11.min.js` (from the npm tarball, sha512 integrity verified; sha256 `d6fdc75f...f717`), license alongside. Config: no indicator styles (CSP), no eval, no script tags, same-origin requests only.
+- Filters use raw scores; the Switch expansion (step 2) applies only to scoring.
+- Gender filter runs in SQL (`gender IN viewer.seeking AND viewer.gender = ANY(seeking)`) and again in Python, so the pure filter stays mutual and testable.
+- Curiosity bounds: `CURIOUS_LOW <= lower < ACTIVE_THRESHOLD` and the higher value `>= ACTIVE_THRESHOLD`; the viewer's mode decides both the curiosity zone and the weights, so A's score for B can differ from B's for A (filters stay mutual).
+- A pair counts in the role_fit denominator if either person has either side active, using effective (post-Switch) scores.
+- Explanation lists only role axes: strict axes first ("совпали по"), then curiosity-only axes ("можно попробовать"), at most 5 in total, ranked by strength then spec order. The style axis is not listed: the spec gives no threshold for it.
+- Tie order: SHA-256 of viewer id, UTC date and candidate id. Random, but stable within a day.
+- Reaction filters (blocks, likes, passes) are wired through `excluded_ids()`, which returns nothing until the reactions table arrives in stage 6.
+- Feed paging uses `?page=N` (1..1000); HTMX requests get the fragment, plain requests the full page. Feed responses are `no-store`.
+- The card carries only the handle and axis labels. Like/pass/block buttons come with `POST /react` in stage 6.
+- Daily feed page limit (20) is deferred to stage 7 with the other limits.
+- Performance check: 1000 active synthetic users, feed built in ~40 ms locally (test asserts < 500 ms, median of 3).

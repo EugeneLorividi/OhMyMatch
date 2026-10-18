@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Лента · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>Лента</h1>
+  {% if feed is none %}
+    <p>Лента откроется, когда заполнены <a href="/profile">профиль</a> и <a href="/result">результат теста</a>.</p>
+  {% else %}
+    <p class="muted">Подбор по совпадению интересов из самоотчётного теста. Это не оценка психологической совместимости.</p>
+    <div id="feed">
+      {% include "_feed_page.html" %}
+    </div>
+  {% endif %}
+{% endblock %}

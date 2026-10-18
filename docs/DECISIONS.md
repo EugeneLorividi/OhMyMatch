@@ -82,7 +82,7 @@ One line per decision. Newest at the bottom of each stage.
 
 ## Languages (after stage 5)
 - Project rule: no Russian anywhere in the repository. Code, docs, tests and commit messages are English; the UI is Ukrainian and English only.
-- `docs/TZ.md` translated to English as `docs/SPEC.md`, section numbering and meaning unchanged; the original stays in git history (it was already pushed, history is not rewritten).
+- `docs/TZ.md` translated to English as `docs/SPEC.md`, section numbering and meaning unchanged; the original stays in git history (it was already pushed, history is not rewritten). Later replaced by the Ukrainian `docs/SPEC.uk.md` (see Ukrainian spec).
 - All UI strings live in `app/locales/uk.json` and `app/locales/en.json` (flat keys, `str.format` placeholders). Code returns message keys (`Msg`) and templates translate them, so parsers and routes contain no UI text.
 - Language: `__Host-lang` cookie (`uk` or `en`, nothing else; Secure, HttpOnly, SameSite=Lax, 1 year), else `Accept-Language` by q-value, else `uk`. Switch via `GET /lang/{code}?next=<path>`; `next` accepts only same-site paths (no open redirect).
 - 403 (CSRF) and 413 (body too large) responses are translated too; the body-limit middleware negotiates the language from raw headers.
@@ -131,3 +131,9 @@ One line per decision. Newest at the bottom of each stage.
 - Backups: `deploy/backup` image (`postgres:17.11-alpine3.24` + `age=1.3.2-r1`). `pg_dump --format=custom` is piped straight into `age --recipients-file`, so no plaintext touches the disk; files are mode 600, written as `.partial` then renamed; copies older than 14 days are deleted on each run. Only the public key is on the server (`~/secrets/backup-recipients.txt`); the private key stays offline and is mounted only for a restore. Mounts use `create_host_path: false` so a missing key fails loudly.
 - `deploy/backup/restore-test.sh` runs a full round trip on synthetic data with a throwaway key: rotation, encryption (no plaintext marker in the file), restore into an empty database, per-table digest comparison.
 - Not done by the app (owner or root tasks): creating the real age key pair, the cron entry for backups, nginx logrotate to 7 days.
+
+## Ukrainian spec and sweep (after stage 7)
+- Owner decision: the spec is Ukrainian only. `docs/SPEC.md` translated into Ukrainian and moved to `docs/SPEC.uk.md`; section numbering, tables, formulas, parameter names, English category names, endpoint paths, table and column names and code blocks kept exactly as they were (code blocks copied verbatim, including their English comments).
+- `docs/SPEC.uk.md` is the only Ukrainian document; README, DECISIONS, code, comments, tests and commit messages stay English.
+- `uk.json` reviewed line by line: calques and grammar fixed ("сеанси завершено" instead of "входи скинуто", "розроблено на випадок витоку" instead of "розрахований на витік", "запобігти цьому", negated genitive), slang "інвайт" replaced by "запрошення", gendered "(-ла)" forms replaced by neutral phrasing. `CONSENT_VERSION` bumped to `2026-10-18.4`.
+- Kept loanwords common in Ukrainian dating and web UIs: "метч", "лайк", "скриншот", "нік", "cookie".

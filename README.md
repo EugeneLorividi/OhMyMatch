@@ -2,7 +2,7 @@
 
 Invite-only web app that matches members of one community by their bdsmtest.org results.
 Pseudonymous by design: it stores only what matching and login need. The full spec is in
-[`docs/SPEC.md`](docs/SPEC.md); implementation decisions are in [`docs/DECISIONS.md`](docs/DECISIONS.md).
+[`docs/SPEC.uk.md`](docs/SPEC.uk.md) (Ukrainian); implementation decisions are in [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 License: AGPL-3.0 (see `LICENSE`).
 

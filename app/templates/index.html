@@ -2,7 +2,16 @@
 {% block content %}
   {% if user %}
     <h1>Привет, {{ user.handle }}</h1>
-    <p>Ты вошёл. Профиль и подбор появятся здесь позже.</p>
+    {% if user.is_active %}
+      <p>Профиль и результат заполнены, ты участвуешь в подборе. Лента появится здесь позже.</p>
+    {% else %}
+      <p>Чтобы участвовать в подборе, заполни профиль и результат теста.</p>
+    {% endif %}
+    <ol class="steps">
+      <li class="{{ 'done' if has_profile else 'todo' }}"><a href="/profile">Профиль</a>: кто я, кого ищу, режим{% if has_profile %} ✓{% endif %}</li>
+      <li class="{{ 'done' if has_scores else 'todo' }}"><a href="/result">Результат теста</a>: 25 значений{% if has_scores %} ✓{% endif %}</li>
+      <li><a href="/dislikes">Список «нет»</a>: чего точно не хочу в партнёре (необязательно{% if dislike_count %}, выбрано: {{ dislike_count }}{% endif %})</li>
+    </ol>
   {% else %}
     <h1>OhMyMatch</h1>
     <p>Закрытый подбор по результатам теста bdsmtest.org. Вход только по инвайту, только 18+.</p>

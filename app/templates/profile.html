@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Профиль · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>Профиль</h1>
+  {% include "_errors.html" %}
+  <form method="post" action="/profile">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <fieldset>
+      <legend>Кто я</legend>
+      {% for key, label in genders.items() %}
+        <label class="check"><input type="radio" name="gender" value="{{ key }}" required{% if gender == key %} checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+    </fieldset>
+    <fieldset>
+      <legend>Кого ищу</legend>
+      {% for key, label in genders.items() %}
+        <label class="check"><input type="checkbox" name="seeking" value="{{ key }}"{% if key in seeking %} checked{% endif %}> {{ label }}</label>
+      {% endfor %}
+    </fieldset>
+    <fieldset>
+      <legend>Режим поиска</legend>
+      <label class="check"><input type="radio" name="mode" value="normal" required{% if mode == "normal" %} checked{% endif %}> {{ modes["normal"] }}: только то, что вы оба точно хотите</label>
+      <label class="check"><input type="radio" name="mode" value="experimental"{% if mode == "experimental" %} checked{% endif %}> {{ modes["experimental"] }}: ещё и то, что можно попробовать</label>
+    </fieldset>
+    <button type="submit">Сохранить</button>
+  </form>
+{% endblock %}

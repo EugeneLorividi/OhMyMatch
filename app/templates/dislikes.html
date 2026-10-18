@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Список «нет» · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>Список «нет»</h1>
+  {% include "_errors.html" %}
+  <p>Отметь, чего ты точно не хочешь в партнёре. Люди, у которых это ярко выражено, не попадут в твою ленту, а ты в их. Этот список никто, кроме тебя, не видит.</p>
+  <form method="post" action="/dislikes">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="grid">
+      {% for category in categories %}
+        <label class="check"><input type="checkbox" name="category" value="{{ category.key }}"{% if category.key in selected %} checked{% endif %}> {{ category.name }}</label>
+      {% endfor %}
+    </div>
+    <button type="submit">Сохранить</button>
+  </form>
+{% endblock %}

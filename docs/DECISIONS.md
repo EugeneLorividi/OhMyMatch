@@ -32,3 +32,19 @@ One line per decision. Newest at the bottom of each stage.
 - Rate limits for login, registration and recovery are deferred to stage 7 as the spec plans.
 - Tests run against real PostgreSQL: `compose.test.yml` (tmpfs, 127.0.0.1:55432, synthetic credentials) locally, a service container in CI. Tests refuse to run without `TEST_DATABASE_URL`.
 - `/robots.txt` disallows all crawling.
+
+## Stage 3: profile and result
+- Category slugs: lowercase, spaces and `/` become `-`, parentheses dropped (`rope-bunny`, `master-mistress`, `primal-hunter`).
+- `categories.py` also defines the axes and pairs from section 7 and checks at import that every category has exactly one role.
+- Text parser uses the spec regex verbatim with `re.ASCII` digits; Unicode spaces, tabs, zero-width chars, full-width `％` and Unicode dashes are normalized first.
+- Lines that do not match the regex are ignored (including `100%Switch` without a space); the missing category is then highlighted, so nothing is lost silently.
+- Duplicates: always an error and flagged; same value is kept, different values leave the field empty for manual input.
+- Aliases are deliberately few (spelling variants of the 25 names); no short forms like `Dom`.
+- Paste limited to 20 000 chars; the pasted text is never echoed back or stored.
+- `test_scores` CHECK: value is a JSON object and every value is an integer 0..100 (via `jsonb_path_exists`); the set of keys is validated in the app.
+- No DB CHECK on gender, seeking or dislike keys: their value sets live in `config.py` / `categories.py` and change without migrations.
+- Gender keys `man`, `woman`, `other` (labels in Russian, in `config.GENDERS`); `seeking` needs at least one value.
+- `is_active` is recomputed on profile and result save: true when gender, seeking and scores are all present.
+- Pages are plain server-rendered forms (no HTMX yet); HTMX gets vendored when the feed needs it.
+- The screenshot tab shows a placeholder until stage 4.
+- Result pages are sent with `Cache-Control: no-store` because they contain the user's own percentages.

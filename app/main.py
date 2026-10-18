@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from app.auth import LoginRequired
 from app.config import settings
 from app.csrf import set_csrf_cookie, verify_csrf
-from app.routes import auth, pages
+from app.routes import auth, pages, profile, result
 
 app = FastAPI(
     docs_url=None,
@@ -18,7 +18,7 @@ app = FastAPI(
 )
 app.state.settings = settings
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
-ROUTERS = (pages.router, auth.router)
+ROUTERS = (pages.router, auth.router, profile.router, result.router)
 for router in ROUTERS:
     app.include_router(router)
 

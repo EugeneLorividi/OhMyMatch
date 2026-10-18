@@ -12,6 +12,9 @@
     <a class="brand" href="/">OhMyMatch</a>
     <nav>
       {% if user %}
+        <a href="/profile">Профиль</a>
+        <a href="/result">Результат</a>
+        <a href="/dislikes">Список «нет»</a>
         <span class="handle">{{ user.handle }}</span>
         <form method="post" action="/logout" class="inline">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Результат теста · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>Результат теста</h1>
+  <p>Пройди тест на bdsmtest.org и перенеси результат сюда. Мы сохраним только 25 чисел: ни текст, ни ссылку, ни скриншот не храним.</p>
+
+  <section class="tab">
+    <h2>Вставить текст</h2>
+    <p>Скопируй список со страницы результата: строки вида <code>92% Rigger</code>. Ссылку и заголовки можно не убирать.</p>
+    <form method="post" action="/result/parse-text">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label for="text">Текст результата</label>
+      <textarea id="text" name="text" rows="10" maxlength="{{ paste_max }}" required spellcheck="false" autocomplete="off"></textarea>
+      <button type="submit">Распознать</button>
+    </form>
+  </section>
+
+  <section class="tab">
+    <h2>Загрузить скрин</h2>
+    <p class="muted">Распознавание скриншотов появится позже. Пока вставь текст или заполни поля вручную.</p>
+  </section>
+
+  <section>
+    <h2>Проверь и подтверди</h2>
+    {% include "_errors.html" %}
+    {% if notice %}<p class="notice">{{ notice }}</p>{% endif %}
+    {% if flagged %}<p class="notice">Подсвеченные поля нужно проверить или заполнить вручную.</p>{% endif %}
+    <form method="post" action="/result/save">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="scores">
+        {% for category in categories %}
+          {% set name = field_prefix ~ category.key %}
+          <label for="{{ name }}" class="score{% if category.key in flagged %} flagged{% endif %}">
+            <span>{{ category.name }}</span>
+            <input id="{{ name }}" name="{{ name }}" type="number" min="0" max="100" step="1" required inputmode="numeric" value="{{ values.get(category.key, '') }}">
+            <span class="unit">%</span>
+          </label>
+        {% endfor %}
+      </div>
+      <button type="submit">Подтвердить и сохранить</button>
+    </form>
+  </section>
+{% endblock %}

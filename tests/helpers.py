@@ -48,3 +48,20 @@ def register(client, db, password: str = PASSWORD):
     )
     assert done.status_code == 200, done.text
     return handle, recovery_code_from(done.text), done
+
+
+def full_result_text(values: dict[str, int] | None = None) -> str:
+    """Synthetic bdsmtest-like paste with all 25 categories."""
+    from app.categories import CATEGORIES
+
+    values = values or {}
+    lines = ["== Results from bdsmtest.org ==", "https://bdsmtest.org/r/synthetic"]
+    for index, category in enumerate(CATEGORIES):
+        lines.append(f"{values.get(category.key, (index * 4) % 101)}% {category.name}")
+    return "\n".join(lines)
+
+
+def score_form(values: dict[str, int | str]) -> dict[str, str]:
+    from app.routes.result import FIELD_PREFIX
+
+    return {FIELD_PREFIX + key: str(value) for key, value in values.items()}

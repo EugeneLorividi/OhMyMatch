@@ -16,3 +16,13 @@ form.inline { display: inline; }
 .consent { font-size: 0.9rem; border: 1px solid #8884; padding: 0 1rem; margin: 1rem 0; }
 .recovery .code { font: 1.4rem/1.2 ui-monospace, monospace; letter-spacing: 0.1em; }
 .handle { font-family: ui-monospace, monospace; }
+fieldset { border: 1px solid #8884; margin: 1rem 0; }
+textarea { width: 100%; font: 0.9rem/1.4 ui-monospace, monospace; padding: 0.5rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.25rem 1rem; }
+.scores { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.25rem 1rem; }
+.score { display: grid; grid-template-columns: 1fr 5rem auto; align-items: center; gap: 0.5rem; margin: 0; padding: 0.15rem 0.35rem; }
+.score.flagged { outline: 2px solid var(--error); border-radius: 4px; }
+.notice { border-left: 4px solid var(--accent); padding: 0.25rem 0.75rem; }
+.muted { color: var(--muted); }
+.steps li.done { color: var(--muted); }
+.tab { border: 1px solid #8884; padding: 0 1rem 1rem; margin: 1rem 0; }

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Регистрация · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>Регистрация</h1>
+  {% include "_errors.html" %}
+  <form method="post" action="/register">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="step" value="code">
+    <label for="invite_code">Код приглашения</label>
+    <input id="invite_code" name="invite_code" required autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="64">
+    <button type="submit">Дальше</button>
+  </form>
+{% endblock %}

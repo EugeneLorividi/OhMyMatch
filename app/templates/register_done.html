@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Аккаунт создан · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>Аккаунт создан</h1>
+  <p>Твой ник: <strong class="handle">{{ user.handle }}</strong></p>
+  {% include "_recovery_code.html" %}
+  <p><a href="/">Я записал(а) код, дальше</a></p>
+{% endblock %}

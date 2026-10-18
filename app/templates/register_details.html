@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Регистрация · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>Регистрация</h1>
+  {% include "_errors.html" %}
+
+  <p>Твой ник: <strong class="handle">{{ handle }}</strong></p>
+  <form method="post" action="/register" class="inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="step" value="regen">
+    <input type="hidden" name="invite_code" value="{{ invite_code }}">
+    <button type="submit" class="secondary">Другой ник</button>
+  </form>
+
+  {% include "_consent.html" %}
+
+  <form method="post" action="/register">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="step" value="details">
+    <input type="hidden" name="invite_code" value="{{ invite_code }}">
+    <input type="hidden" name="handle" value="{{ handle }}">
+    <label class="check"><input type="checkbox" name="age_confirmed" value="yes" required{% if age_checked %} checked{% endif %}> Мне есть 18 лет</label>
+    <label class="check"><input type="checkbox" name="consent" value="yes" required{% if consent_checked %} checked{% endif %}> Я прочитал(а), что хранится, и согласен(на)</label>
+    <label for="password">Пароль (не короче {{ password_min }} символов)</label>
+    <input id="password" name="password" type="password" required minlength="{{ password_min }}" maxlength="{{ password_max }}" autocomplete="new-password">
+    <label for="password_confirm">Пароль ещё раз</label>
+    <input id="password_confirm" name="password_confirm" type="password" required minlength="{{ password_min }}" maxlength="{{ password_max }}" autocomplete="new-password">
+    <button type="submit">Создать аккаунт</button>
+  </form>
+{% endblock %}

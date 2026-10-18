@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Восстановление · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>Восстановление доступа</h1>
+  {% include "_errors.html" %}
+  <p>Нужен код восстановления, который был показан при регистрации. После смены пароля все остальные входы будут сброшены, а код заменится новым.</p>
+  <form method="post" action="/recover">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="handle">Ник</label>
+    <input id="handle" name="handle" required autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="64">
+    <label for="recovery_code">Код восстановления</label>
+    <input id="recovery_code" name="recovery_code" required autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="64">
+    <label for="password">Новый пароль (не короче {{ password_min }} символов)</label>
+    <input id="password" name="password" type="password" required minlength="{{ password_min }}" maxlength="{{ password_max }}" autocomplete="new-password">
+    <label for="password_confirm">Новый пароль ещё раз</label>
+    <input id="password_confirm" name="password_confirm" type="password" required minlength="{{ password_min }}" maxlength="{{ password_max }}" autocomplete="new-password">
+    <button type="submit">Сменить пароль</button>
+  </form>
+{% endblock %}

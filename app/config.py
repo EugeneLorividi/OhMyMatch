@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -11,3 +13,11 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Access
+SESSION_TTL = timedelta(days=7)
+CONSENT_VERSION = "2026-10-18"
+PASSWORD_MIN_LENGTH = 10
+PASSWORD_MAX_LENGTH = 128
+INVITE_MAX_COUNT = 1000
+INVITE_MAX_TTL_DAYS = 90

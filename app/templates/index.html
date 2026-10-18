@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+  {% if user %}
+    <h1>Привет, {{ user.handle }}</h1>
+    <p>Ты вошёл. Профиль и подбор появятся здесь позже.</p>
+  {% else %}
+    <h1>OhMyMatch</h1>
+    <p>Закрытый подбор по результатам теста bdsmtest.org. Вход только по инвайту, только 18+.</p>
+    <p><a href="/register">Есть инвайт</a> · <a href="/login">Уже есть аккаунт</a></p>
+  {% endif %}
+{% endblock %}

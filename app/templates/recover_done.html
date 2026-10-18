@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Пароль изменён · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>Пароль изменён</h1>
+  <p>Все остальные входы сброшены. Старый код восстановления больше не работает.</p>
+  {% include "_recovery_code.html" %}
+  <p><a href="/">Я записал(а) новый код, дальше</a></p>
+{% endblock %}

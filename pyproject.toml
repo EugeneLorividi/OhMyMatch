@@ -6,9 +6,12 @@ license = "AGPL-3.0-only"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.20.0",
+    "argon2-cffi>=25.1.0",
     "fastapi>=0.146.0",
+    "jinja2>=3.1.6",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.16.0",
+    "python-multipart>=0.0.32",
     "sqlalchemy>=2.1.5",
     "uvicorn[standard]>=0.54.0",
 ]
@@ -32,7 +35,7 @@ extend-exclude = ["migrations/versions"]
 select = ["E", "F", "W", "I", "UP", "B", "S", "SIM"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]
+"tests/**" = ["S101", "S105", "S106"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

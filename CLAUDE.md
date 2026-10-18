@@ -29,3 +29,8 @@ Spec: docs/SPEC.md. It is the source of truth. Follow section 12 stage by stage.
 - STOP and ask me ONLY if: a stage needs a decision that changes the spec or data model; something must be installed or changed outside ~/ohmymatch; a secret or real user data would be touched; two attempts to fix a failing check did not work; you want to deviate from docs/SPEC.md.
 - Never ask for confirmation of things already covered by CLAUDE.md or docs/SPEC.md.
 - Stop after the end of stage 5 (matching) and give me a summary: what was done, decisions made, open risks.
+
+## Reports
+- After every finished stage or larger task (including the Russian-removal and i18n work), write a report to ~/reports/ (outside the repo, never committed). File names: stage-N.md, or task-<short-name>.md for non-stage work. English only.
+- Contents: what was done, decisions made and why, deviations from docs/SPEC.md, test and check results (counts, not full logs), open risks, anything touching privacy or logging, git log --oneline and git diff --stat for the work. Never include secrets, key values or the contents of ~/secrets. Under 150 lines.
+- When you stop and wait for me, write the report first.

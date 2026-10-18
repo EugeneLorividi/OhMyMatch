@@ -1,12 +1,14 @@
 # OhMyMatch: rules for Claude Code
 
-Spec: docs/TZ.md (in Russian). It is the source of truth. Follow section 12 stage by stage.
+Spec: docs/TZ.md. It is the source of truth. Follow section 12 stage by stage.
 
 ## Workflow
 - Work on ONE stage at a time. Run tests and ruff before finishing a stage. Do not start the next stage until tests are green.
 - Commit after each stage. Commit messages in English, imperative mood, up to ~50 chars (e.g. "Add FastAPI skeleton").
 - Never run `git push` unless the user asks. Never rewrite pushed history.
-- Code, comments, identifiers: English. UI texts: Russian.
+- Code, comments, identifiers, docs, commit messages and tests: English.
+- UI: Ukrainian and English only, through i18n (both languages say the same thing).
+- Never write Russian anywhere: code, comments, docs, UI, tests, fixtures, nickname lists.
 
 ## Hard rules (privacy, public repo)
 - Never commit secrets, .env, keys, dumps, backups, real user data, real bdsmtest screenshots or results. Only .env.example with empty values. OCR fixtures must be synthetic.

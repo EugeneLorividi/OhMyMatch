@@ -19,7 +19,7 @@ settings = Settings()
 
 # Access
 SESSION_TTL = timedelta(days=7)
-CONSENT_VERSION = "2026-10-18.3"  # bumped: uk/en text, inference warning, privacy link
+CONSENT_VERSION = "2026-10-18.4"  # bumped: Ukrainian consent wording corrected
 PASSWORD_MIN_LENGTH = 10
 PASSWORD_MAX_LENGTH = 128
 INVITE_MAX_COUNT = 1000

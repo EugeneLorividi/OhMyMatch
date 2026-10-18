@@ -12,6 +12,7 @@ from app.categories import CATEGORIES, CATEGORY_KEYS
 from app.config import GENDERS, MODES
 from app.db.session import get_db
 from app.forms import form_data
+from app.i18n import msg
 from app.models import Dislike
 from app.templating import render
 
@@ -46,11 +47,11 @@ def save_profile(request: Request, user: RequiredUser, db: Db, form: Form) -> Re
     mode = form.get("mode")
     errors = []
     if gender not in GENDERS:
-        errors.append("Выбери, кто ты.")
+        errors.append(msg("error.pick_gender"))
     if not seeking or not set(seeking) <= set(GENDERS):
-        errors.append("Выбери хотя бы один вариант в «кого ищу».")
+        errors.append(msg("error.pick_seeking"))
     if mode not in MODES:
-        errors.append("Выбери режим поиска.")
+        errors.append(msg("error.pick_mode"))
     if errors:
         clean_seeking = [g for g in seeking if g in GENDERS]
         return _profile_page(request, user, gender, clean_seeking, mode, errors, status=400)
@@ -81,7 +82,7 @@ def save_dislikes(request: Request, user: RequiredUser, db: Db, form: Form) -> R
             "user": user,
             "categories": CATEGORIES,
             "selected": {key for key in chosen if key in CATEGORY_KEYS},
-            "errors": ["Неизвестная категория в списке."],
+            "errors": [msg("error.unknown_category_key")],
         }
         return render(request, "dislikes.html", context, 400)
     db.execute(delete(Dislike).where(Dislike.user_id == user.id))

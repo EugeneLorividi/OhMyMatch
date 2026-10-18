@@ -10,10 +10,10 @@ from app.config import OCR_MAX_FILE_BYTES
 from app.models import TestScore
 from app.parsing import ocr_parser
 from app.parsing.ocr_parser import ImageRejected, OcrLine, load_image
-from tests.helpers import csrf, post, register
+from tests.helpers import csrf, post, register, uk
 from tests.ocr_fixtures import render
 
-WARNING = "Распознавание неточное. Проверь цифры перед сохранением."
+WARNING = uk("result.ocr_warning")
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ def test_rejects_more_than_three_files(client, db, fake_ocr):
     files = [("images", (f"{i}.png", png(), "image/png")) for i in range(4)]
     response = upload(client, files)
     assert response.status_code == 400
-    assert "Не больше 3" in response.text
+    assert uk("error.too_many_images", max=3) in response.text
 
 
 def test_rejects_no_files(client, db):
@@ -76,7 +76,7 @@ def test_rejects_large_file(client, db, fake_ocr):
     big = b"\x89PNG" + b"0" * OCR_MAX_FILE_BYTES
     response = upload(client, [("images", ("a.png", big, "image/png"))])
     assert response.status_code == 400
-    assert "8 МБ" in response.text
+    assert uk("error.image_too_big") in response.text
 
 
 @pytest.mark.parametrize(
@@ -95,7 +95,7 @@ def test_rejects_gif_even_with_png_name(client, db, fake_ocr):
     Image.new("RGB", (10, 10)).save(gif, format="GIF")
     response = upload(client, [("images", ("a.png", gif.getvalue(), "image/png"))])
     assert response.status_code == 400
-    assert "jpeg, png и webp" in response.text
+    assert uk("error.image_format") in response.text
 
 
 def test_busy_returns_503(client, db, fake_ocr, monkeypatch):

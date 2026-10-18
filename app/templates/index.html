@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
   {% if user %}
-    <h1>Привет, {{ user.handle }}</h1>
+    <h1>{{ t("index.hello", handle=user.handle) }}</h1>
     {% if user.is_active %}
-      <p>Профиль и результат заполнены, ты участвуешь в подборе. <a href="/feed">Открыть ленту</a></p>
+      <p>{{ t("index.active") }} <a href="/feed">{{ t("index.open_feed") }}</a></p>
     {% else %}
-      <p>Чтобы участвовать в подборе, заполни профиль и результат теста.</p>
+      <p>{{ t("index.inactive") }}</p>
     {% endif %}
     <ol class="steps">
-      <li class="{{ 'done' if has_profile else 'todo' }}"><a href="/profile">Профиль</a>: кто я, кого ищу, режим{% if has_profile %} ✓{% endif %}</li>
-      <li class="{{ 'done' if has_scores else 'todo' }}"><a href="/result">Результат теста</a>: 25 значений{% if has_scores %} ✓{% endif %}</li>
-      <li><a href="/dislikes">Список «нет»</a>: чего точно не хочу в партнёре (необязательно{% if dislike_count %}, выбрано: {{ dislike_count }}{% endif %})</li>
+      <li class="{{ 'done' if has_profile else 'todo' }}"><a href="/profile">{{ t("index.step_profile") }}</a>: {{ t("index.step_profile_hint") }}{% if has_profile %} ✓{% endif %}</li>
+      <li class="{{ 'done' if has_scores else 'todo' }}"><a href="/result">{{ t("index.step_result") }}</a>: {{ t("index.step_result_hint") }}{% if has_scores %} ✓{% endif %}</li>
+      <li><a href="/dislikes">{{ t("index.step_dislikes") }}</a>: {{ t("index.step_dislikes_hint") }}{% if dislike_count %}, {{ t("index.dislikes_selected", count=dislike_count) }}{% endif %}</li>
     </ol>
   {% else %}
     <h1>OhMyMatch</h1>
-    <p>Закрытый подбор по результатам теста bdsmtest.org. Вход только по инвайту, только 18+.</p>
-    <p><a href="/register">Есть инвайт</a> · <a href="/login">Уже есть аккаунт</a></p>
+    <p>{{ t("index.guest_intro") }}</p>
+    <p><a href="/register">{{ t("index.have_invite") }}</a> · <a href="/login">{{ t("index.have_account") }}</a></p>
   {% endif %}
 {% endblock %}

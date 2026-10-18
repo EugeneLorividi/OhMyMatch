@@ -24,6 +24,7 @@ from app.config import (
     OCR_MIN_CONFIDENCE,
     OCR_TESSERACT_TIMEOUT_SECONDS,
 )
+from app.i18n import Msg, msg
 from app.parsing.text_parser import ParseResult, normalize_name, split_line
 
 # At most OCR_CONCURRENCY recognitions at once, process-wide.
@@ -33,7 +34,11 @@ _CHOICES: dict[str, str] = {normalize_name(c.name): c.key for c in CATEGORIES} |
 
 
 class ImageRejected(ValueError):
-    """The upload is not an acceptable image. The message is shown to the user."""
+    """The upload is not an acceptable image. `message` is shown to the user."""
+
+    def __init__(self, key: str) -> None:
+        super().__init__(key)
+        self.message: Msg = msg(key)
 
 
 @dataclass(frozen=True)
@@ -73,18 +78,18 @@ def fuzzy_match(name: str) -> NameMatch | None:
 def load_image(data: bytes) -> Image.Image:
     """Validates an upload and returns an RGB copy without EXIF or other metadata."""
     if len(data) > OCR_MAX_FILE_BYTES:
-        raise ImageRejected("Файл больше 8 МБ.")
+        raise ImageRejected("error.image_too_big")
     try:
         image = Image.open(io.BytesIO(data))
         image_format = image.format
         if image_format not in OCR_FORMATS:
-            raise ImageRejected("Поддерживаются только jpeg, png и webp.")
+            raise ImageRejected("error.image_format")
         if image.width * image.height > OCR_MAX_INPUT_PIXELS:
-            raise ImageRejected("Изображение слишком большое.")
+            raise ImageRejected("error.image_pixels")
         image = ImageOps.exif_transpose(image)
         pixels = image.convert("RGB")
     except (UnidentifiedImageError, Image.DecompressionBombError, OSError, SyntaxError) as exc:
-        raise ImageRejected("Не удалось открыть изображение.") from exc
+        raise ImageRejected("error.image_broken") from exc
     # Rebuild from raw pixels so no metadata survives.
     return Image.frombytes("RGB", pixels.size, pixels.tobytes())
 
@@ -150,11 +155,11 @@ def parse_lines(lines: Iterable[OcrLine]) -> ParseResult:
         percent, name = parts
         match = fuzzy_match(name)
         if match is None:
-            result.errors.append(f"Не удалось распознать категорию «{name}».")
+            result.errors.append(msg("ocr.unknown_category", name=name))
             continue
         label = CATEGORY_BY_KEY[match.key].name
         if not 0 <= percent <= 100:
-            result.errors.append(f"{label}: распознано {percent}%, это вне диапазона 0–100.")
+            result.errors.append(msg("ocr.out_of_range", category=label, percent=percent))
             result.flagged.add(match.key)
             continue
         uncertain = not match.certain or line.confidence < OCR_MIN_CONFIDENCE
@@ -168,7 +173,7 @@ def parse_lines(lines: Iterable[OcrLine]) -> ParseResult:
                 found[match.key] = candidate
         else:
             result.errors.append(
-                f"{label}: распознано по-разному ({previous.percent}% и {percent}%)."
+                msg("ocr.conflict", category=label, first=previous.percent, second=percent)
             )
             result.flagged.add(match.key)
             if candidate.confidence > previous.confidence:

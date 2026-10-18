@@ -11,6 +11,7 @@ from app.categories import CATEGORIES, CATEGORY_KEYS
 from app.config import OCR_MAX_FILE_BYTES, OCR_MAX_FILES, OCR_QUEUE_WAIT_SECONDS, PASTE_MAX_CHARS
 from app.db.session import get_db
 from app.forms import form_data
+from app.i18n import Msg, msg
 from app.models import TestScore, User
 from app.parsing import ocr_parser
 from app.parsing.text_parser import parse_text
@@ -29,8 +30,8 @@ def _result_page(
     user: User,
     values: dict[str, int | str],
     flagged: set[str] | None = None,
-    errors: list[str] | None = None,
-    notice: str | None = None,
+    errors: list[Msg] | None = None,
+    notice: Msg | None = None,
     status_code: int = 200,
     ocr: bool = False,
 ) -> Response:
@@ -60,13 +61,14 @@ def result_page(request: Request, user: RequiredUser, db: Db) -> Response:
 def parse_result_text(request: Request, user: RequiredUser, form: Form) -> Response:
     text = form.get("text")
     if not isinstance(text, str) or not text.strip():
-        return _result_page(request, user, {}, errors=["Вставь текст результата."], status_code=400)
+        error = msg("error.paste_empty")
+        return _result_page(request, user, {}, errors=[error], status_code=400)
     if len(text) > PASTE_MAX_CHARS:
-        error = f"Текст слишком длинный: не больше {PASTE_MAX_CHARS} символов."
+        error = msg("error.paste_too_long", max=PASTE_MAX_CHARS)
         return _result_page(request, user, {}, errors=[error], status_code=400)
     parsed = parse_text(text)
     found = len(parsed.values)
-    notice = f"Найдено {found} из {len(CATEGORY_KEYS)}. Проверь значения и подтверди."
+    notice = msg("result.found", found=found, total=len(CATEGORY_KEYS))
     return _result_page(request, user, parsed.values, parsed.flagged, parsed.errors, notice)
 
 
@@ -74,27 +76,27 @@ def parse_result_text(request: Request, user: RequiredUser, form: Form) -> Respo
 def parse_result_image(request: Request, user: RequiredUser, form: Form) -> Response:
     uploads = [u for u in form.getlist("images") if isinstance(u, UploadFile) and u.filename]
     if not uploads:
-        error = "Выбери хотя бы один скриншот."
+        error = msg("error.no_images")
         return _result_page(request, user, {}, errors=[error], status_code=400)
     if len(uploads) > OCR_MAX_FILES:
-        error = f"Не больше {OCR_MAX_FILES} изображений за раз."
+        error = msg("error.too_many_images", max=OCR_MAX_FILES)
         return _result_page(request, user, {}, errors=[error], status_code=400)
     blobs = [upload.file.read(OCR_MAX_FILE_BYTES + 1) for upload in uploads]
 
     if not ocr_parser.slots.acquire(timeout=OCR_QUEUE_WAIT_SECONDS):
-        error = "Сейчас распознаётся слишком много скриншотов. Попробуй через минуту."
+        error = msg("error.ocr_busy")
         return _result_page(request, user, {}, errors=[error], status_code=503)
     try:
         parsed = ocr_parser.parse_images(blobs)
     except ocr_parser.ImageRejected as exc:
-        return _result_page(request, user, {}, errors=[str(exc)], status_code=400)
+        return _result_page(request, user, {}, errors=[exc.message], status_code=400)
     except RuntimeError:  # Tesseract timeout
-        error = "Не получилось распознать вовремя. Попробуй скриншот поменьше."
+        error = msg("error.ocr_timeout")
         return _result_page(request, user, {}, errors=[error], status_code=503)
     finally:
         ocr_parser.slots.release()
 
-    notice = f"Найдено {len(parsed.values)} из {len(CATEGORY_KEYS)}."
+    notice = msg("result.found_ocr", found=len(parsed.values), total=len(CATEGORY_KEYS))
     return _result_page(
         request, user, parsed.values, parsed.flagged, parsed.errors, notice, ocr=True
     )
@@ -121,7 +123,7 @@ def _read_scores(form: FormData) -> tuple[dict[str, int | str], dict[str, int], 
 def save_result(request: Request, user: RequiredUser, db: Db, form: Form) -> Response:
     shown, scores, invalid = _read_scores(form)
     if invalid:
-        error = "Заполни все 25 полей целыми числами от 0 до 100."
+        error = msg("error.scores_invalid")
         return _result_page(request, user, shown, invalid, [error], status_code=400)
     saved = db.get(TestScore, user.id)
     if saved is None:

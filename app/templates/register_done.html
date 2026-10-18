@@ -1,8 +1,8 @@
 {% extends "base.html" %}
-{% block title %}Аккаунт создан · OhMyMatch{% endblock %}
+{% block title %}{{ t("register.done_title") }} · OhMyMatch{% endblock %}
 {% block content %}
-  <h1>Аккаунт создан</h1>
-  <p>Твой ник: <strong class="handle">{{ user.handle }}</strong></p>
+  <h1>{{ t("register.done_title") }}</h1>
+  <p>{{ t("register.your_handle") }} <strong class="handle">{{ user.handle }}</strong></p>
   {% include "_recovery_code.html" %}
-  <p><a href="/">Я записал(а) код, дальше</a></p>
+  <p><a href="/">{{ t("register.done_continue") }}</a></p>
 {% endblock %}

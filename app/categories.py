@@ -11,8 +11,7 @@ class Category:
 
 @dataclass(frozen=True)
 class Axis:
-    key: str
-    label: str  # Russian, shown in "совпали по: ..."
+    key: str  # UI label is the locale key axis.<key>
     pairs: tuple[tuple[str, str], ...] = ()
     style: tuple[str, ...] = ()
 
@@ -53,24 +52,22 @@ NON_MONOGAMIST = "non-monogamist"
 AXES: tuple[Axis, ...] = (
     Axis(
         "power",
-        "власть",
         pairs=(
             ("dominant", "submissive"),
             ("master-mistress", "slave"),
             ("owner", "pet"),
         ),
     ),
-    Axis("pain", "боль", pairs=(("sadist", "masochist"),)),
-    Axis("rope", "верёвки", pairs=(("rigger", "rope-bunny"),)),
+    Axis("pain", pairs=(("sadist", "masochist"),)),
+    Axis("rope", pairs=(("rigger", "rope-bunny"),)),
     Axis(
         "play",
-        "игра",
         pairs=(("brat", "brat-tamer"), ("primal-hunter", "primal-prey")),
     ),
-    Axis("humiliation", "унижение", pairs=(("degrader", "degradee"),)),
-    Axis("care", "опека", pairs=(("daddy-mommy", "little"),)),
-    Axis("display", "показ", pairs=(("voyeur", "exhibitionist"),)),
-    Axis("style", "стиль", style=("experimentalist", "vanilla", "ageplayer")),
+    Axis("humiliation", pairs=(("degrader", "degradee"),)),
+    Axis("care", pairs=(("daddy-mommy", "little"),)),
+    Axis("display", pairs=(("voyeur", "exhibitionist"),)),
+    Axis("style", style=("experimentalist", "vanilla", "ageplayer")),
 )
 ROLE_PAIRS: tuple[tuple[str, str], ...] = tuple(p for axis in AXES for p in axis.pairs)
 STYLE_KEYS: tuple[str, ...] = next(axis.style for axis in AXES if axis.style)

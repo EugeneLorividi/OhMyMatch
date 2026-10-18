@@ -1,4 +1,5 @@
 from app.categories import CATEGORIES, CATEGORY_KEYS
+from app.i18n import msg
 from app.parsing.text_parser import match_name, parse_text
 from tests.helpers import full_result_text
 
@@ -72,14 +73,14 @@ def test_out_of_range():
     result = parse_text("101% Switch\n999% Rigger\n0% Vanilla\n100% Pet")
     assert result.values == {"vanilla": 0, "pet": 100}
     assert len(result.errors) == 2
-    assert "Switch" in result.errors[0] and "0–100" in result.errors[0]
+    assert result.errors[0] == msg("parse.out_of_range", line=1, category="Switch", percent=101)
     assert {"switch", "rigger"} <= result.flagged
 
 
 def test_unknown_category_is_an_error():
     result = parse_text("50% Rigger\n40% Unicorn")
     assert result.values == {"rigger": 50}
-    assert result.errors == ["Строка 2: неизвестная категория «Unicorn»."]
+    assert result.errors == [msg("parse.unknown_category", line=2, name="Unicorn")]
 
 
 def test_duplicate_with_different_value_is_dropped_and_flagged():
@@ -87,8 +88,8 @@ def test_duplicate_with_different_value_is_dropped_and_flagged():
     assert "rigger" not in result.values
     assert "rigger" in result.flagged
     assert result.values == {"switch": 10}
-    assert "повторяется" in result.errors[0]
-    assert "строке 1" in result.errors[0]
+    assert result.errors[0].key == "parse.duplicate"
+    assert result.errors[0].params["first_line"] == 1
 
 
 def test_duplicate_with_same_value_is_kept_but_flagged():

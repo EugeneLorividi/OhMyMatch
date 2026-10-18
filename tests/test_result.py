@@ -8,7 +8,7 @@ from app.categories import CATEGORY_KEYS
 from app.config import PASTE_MAX_CHARS
 from app.models import TestScore, User
 from app.parsing.text_parser import parse_text
-from tests.helpers import full_result_text, post, register, score_form
+from tests.helpers import full_result_text, post, register, score_form, uk
 
 ALL_FIFTY = dict.fromkeys(CATEGORY_KEYS, 50)
 
@@ -21,7 +21,7 @@ def test_parse_text_fills_form_and_stores_nothing(client, db):
     assert response.headers["cache-control"] == "no-store"
     assert 'name="score_rigger" type="number"' in response.text
     assert 'value="92"' in response.text
-    assert "Найдено 25 из 25" in response.text
+    assert uk("result.found", found=25, total=25) in response.text
     assert "private note" not in response.text
     assert "bdsmtest.org/r/synthetic" not in response.text
     assert db.scalars(select(TestScore)).first() is None
@@ -31,9 +31,9 @@ def test_parse_text_highlights_missing_and_errors(client, db):
     register(client, db)
     response = post(client, "/result/parse-text", {"text": "92% Rigger\n120% Switch\n5% Unicorn"})
     assert response.status_code == 200
-    assert "Найдено 1 из 25" in response.text
-    assert "вне диапазона" in response.text
-    assert "неизвестная категория «Unicorn»" in response.text
+    assert uk("result.found", found=1, total=25) in response.text
+    assert uk("parse.out_of_range", line=2, category="Switch", percent=120) in response.text
+    assert uk("parse.unknown_category", line=3, name="Unicorn") in response.text
     assert response.text.count("score flagged") == 24
 
 

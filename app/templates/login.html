@@ -1,15 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Вход · OhMyMatch{% endblock %}
+{% block title %}{{ t("login.title") }} · OhMyMatch{% endblock %}
 {% block content %}
-  <h1>Вход</h1>
+  <h1>{{ t("login.title") }}</h1>
   {% include "_errors.html" %}
   <form method="post" action="/login">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <label for="handle">Ник</label>
+    <label for="handle">{{ t("login.handle") }}</label>
     <input id="handle" name="handle" required autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="64">
-    <label for="password">Пароль</label>
+    <label for="password">{{ t("login.password") }}</label>
     <input id="password" name="password" type="password" required maxlength="{{ password_max }}" autocomplete="current-password">
-    <button type="submit">Войти</button>
+    <button type="submit">{{ t("login.submit") }}</button>
   </form>
-  <p><a href="/recover">Забыл(а) пароль</a></p>
+  <p><a href="/recover">{{ t("login.forgot") }}</a></p>
 {% endblock %}

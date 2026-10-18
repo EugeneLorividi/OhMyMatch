@@ -1,7 +1,7 @@
 from sqlalchemy import select
 
 from app.models import UserSession
-from tests.helpers import PASSWORD, post, recovery_code_from, register
+from tests.helpers import PASSWORD, post, recovery_code_from, register, uk
 
 NEW_PASSWORD = "another long password"
 
@@ -52,5 +52,5 @@ def test_wrong_code_and_unknown_handle_look_the_same(client, db):
     wrong = recover(client, handle, "AAAA-BBBB-CCCC-DDDD")
     unknown = recover(client, "brave-fox-11", "AAAA-BBBB-CCCC-DDDD")
     assert wrong.status_code == unknown.status_code == 400
-    assert "Неверный ник или код" in wrong.text
-    assert "Неверный ник или код" in unknown.text
+    assert uk("error.invalid_recovery") in wrong.text
+    assert uk("error.invalid_recovery") in unknown.text

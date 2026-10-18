@@ -1,27 +1,28 @@
 {% extends "base.html" %}
-{% block title %}Профиль · OhMyMatch{% endblock %}
+{% block title %}{{ t("profile.title") }} · OhMyMatch{% endblock %}
 {% block content %}
-  <h1>Профиль</h1>
+  <h1>{{ t("profile.title") }}</h1>
   {% include "_errors.html" %}
   <form method="post" action="/profile">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <fieldset>
-      <legend>Кто я</legend>
-      {% for key, label in genders.items() %}
-        <label class="check"><input type="radio" name="gender" value="{{ key }}" required{% if gender == key %} checked{% endif %}> {{ label }}</label>
+      <legend>{{ t("profile.who_i_am") }}</legend>
+      {% for key in genders %}
+        <label class="check"><input type="radio" name="gender" value="{{ key }}" required{% if gender == key %} checked{% endif %}> {{ t("gender." ~ key) }}</label>
       {% endfor %}
     </fieldset>
     <fieldset>
-      <legend>Кого ищу</legend>
-      {% for key, label in genders.items() %}
-        <label class="check"><input type="checkbox" name="seeking" value="{{ key }}"{% if key in seeking %} checked{% endif %}> {{ label }}</label>
+      <legend>{{ t("profile.seeking") }}</legend>
+      {% for key in genders %}
+        <label class="check"><input type="checkbox" name="seeking" value="{{ key }}"{% if key in seeking %} checked{% endif %}> {{ t("gender." ~ key) }}</label>
       {% endfor %}
     </fieldset>
     <fieldset>
-      <legend>Режим поиска</legend>
-      <label class="check"><input type="radio" name="mode" value="normal" required{% if mode == "normal" %} checked{% endif %}> {{ modes["normal"] }}: только то, что вы оба точно хотите</label>
-      <label class="check"><input type="radio" name="mode" value="experimental"{% if mode == "experimental" %} checked{% endif %}> {{ modes["experimental"] }}: ещё и то, что можно попробовать</label>
+      <legend>{{ t("profile.mode") }}</legend>
+      {% for key in modes %}
+        <label class="check"><input type="radio" name="mode" value="{{ key }}" required{% if mode == key %} checked{% endif %}> {{ t("mode." ~ key) }}: {{ t("profile.mode_" ~ key ~ "_hint") }}</label>
+      {% endfor %}
     </fieldset>
-    <button type="submit">Сохранить</button>
+    <button type="submit">{{ t("common.save") }}</button>
   </form>
 {% endblock %}

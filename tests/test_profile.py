@@ -2,7 +2,7 @@ from sqlalchemy import select
 
 from app.models import Dislike, User
 from app.parsing.text_parser import parse_text
-from tests.helpers import full_result_text, post, register, score_form
+from tests.helpers import full_result_text, post, register, score_form, uk
 
 
 def profile(client, gender="woman", seeking=("man", "other"), mode="normal"):
@@ -54,7 +54,7 @@ def test_becomes_active_after_profile_and_scores(client, db):
     post(client, "/result/save", score_form(values))
     db.expire_all()
     assert db.scalars(select(User)).one().is_active is True
-    assert "ты участвуешь в подборе" in client.get("/").text
+    assert uk("index.active") in client.get("/").text
 
 
 def test_dislikes(client, db):

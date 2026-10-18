@@ -2,12 +2,16 @@
 
 import secrets
 
-from fastapi import HTTPException, Request, Response
+from fastapi import Request, Response
 
 CSRF_COOKIE = "__Host-csrf"
 CSRF_FIELD = "csrf_token"
 CSRF_HEADER = "X-CSRF-Token"
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+
+class CsrfFailed(Exception):
+    pass
 
 
 def get_csrf_token(request: Request) -> str:
@@ -41,4 +45,4 @@ async def verify_csrf(request: Request) -> None:
         value = form.get(CSRF_FIELD)
         submitted = value if isinstance(value, str) else None
     if not expected or not submitted or not secrets.compare_digest(expected, submitted):
-        raise HTTPException(status_code=403, detail="CSRF check failed")
+        raise CsrfFailed

@@ -4,7 +4,7 @@ from sqlalchemy import select
 
 from app.auth import SESSION_COOKIE
 from app.models import UserSession
-from tests.helpers import PASSWORD, post, register
+from tests.helpers import PASSWORD, post, register, uk
 
 
 def login(client, handle, password=PASSWORD):
@@ -33,8 +33,8 @@ def test_wrong_password_and_unknown_handle_look_the_same(client, db):
     wrong = login(client, handle, "wrong password!")
     unknown = login(client, "brave-fox-11")
     assert wrong.status_code == unknown.status_code == 400
-    assert "Неверный ник или пароль" in wrong.text
-    assert "Неверный ник или пароль" in unknown.text
+    assert uk("error.invalid_login") in wrong.text
+    assert uk("error.invalid_login") in unknown.text
     assert SESSION_COOKIE not in client.cookies
 
 

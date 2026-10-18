@@ -5,6 +5,7 @@ import unicodedata
 from dataclasses import dataclass, field
 
 from app.categories import ALIASES, CATEGORIES, CATEGORY_BY_KEY, CATEGORY_KEYS
+from app.i18n import Msg, msg
 
 LINE_RE = re.compile(r"^\s*(\d{1,3})\s*%\s+(.+?)\s*$", re.ASCII)
 
@@ -16,7 +17,7 @@ _ZERO_WIDTH = dict.fromkeys(map(ord, "​‌‍⁠﻿"))
 @dataclass
 class ParseResult:
     values: dict[str, int] = field(default_factory=dict)
-    errors: list[str] = field(default_factory=list)
+    errors: list[Msg] = field(default_factory=list)
     # Keys that need the user's attention on the confirmation form.
     flagged: set[str] = field(default_factory=set)
 
@@ -64,18 +65,26 @@ def parse_text(text: str) -> ParseResult:
         percent, name = parts
         key = match_name(name)
         if key is None:
-            result.errors.append(f"Строка {number}: неизвестная категория «{name}».")
+            result.errors.append(msg("parse.unknown_category", line=number, name=name))
             continue
         label = CATEGORY_BY_KEY[key].name
         if not 0 <= percent <= 100:
-            result.errors.append(f"Строка {number}: {label}: {percent}% вне диапазона 0–100.")
+            result.errors.append(
+                msg("parse.out_of_range", line=number, category=label, percent=percent)
+            )
             result.flagged.add(key)
             continue
         if key in seen_on:
             first_line, first_percent = seen_on[key]
             result.errors.append(
-                f"Строка {number}: {label} повторяется (уже было в строке {first_line}: "
-                f"{first_percent}%, здесь {percent}%)."
+                msg(
+                    "parse.duplicate",
+                    line=number,
+                    category=label,
+                    first_line=first_line,
+                    first_percent=first_percent,
+                    percent=percent,
+                )
             )
             result.flagged.add(key)
             if percent != first_percent:

@@ -65,3 +65,10 @@ def score_form(values: dict[str, int | str]) -> dict[str, str]:
     from app.routes.result import FIELD_PREFIX
 
     return {FIELD_PREFIX + key: str(value) for key, value in values.items()}
+
+
+def uk(key: str, **params) -> str:
+    """UI text in the default language, as the tests' requests carry no language preference."""
+    from app.i18n import translate
+
+    return translate("uk", key, **params)

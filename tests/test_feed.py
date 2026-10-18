@@ -11,7 +11,7 @@ from app.config import FEED_PAGE_SIZE
 from app.handles import generate_handle
 from app.matching.feed import build_feed
 from app.models import Dislike, TestScore, User
-from tests.helpers import post, register, score_form
+from tests.helpers import post, register, score_form, uk
 
 NOW = datetime(2026, 10, 18, tzinfo=UTC)
 
@@ -69,7 +69,7 @@ def test_feed_applies_filters_and_ranks(db):
     add_user(db, submissive=95, dislikes=("dominant",))  # candidate says no to the viewer
     feed = build_feed(db, me, 1)
     assert handles(feed) == [best.handle, good.handle]
-    assert feed.cards[0].matched == ("власть", "боль")
+    assert feed.cards[0].matched == ("power", "pain")
     assert not feed.has_next
 
 
@@ -105,7 +105,7 @@ def test_feed_page_html_has_no_private_data(client, db):
             assert response.status_code == 200
             assert response.headers["cache-control"] == "no-store"
             html = response.text
-            assert "Совпали по: власть" in html
+            assert uk("feed.matched_on", axes=uk("axis.power")) in html
             for category in CATEGORIES:
                 assert not re.search(rf"\b{re.escape(category.name)}\b", html, re.IGNORECASE), (
                     category
@@ -132,7 +132,7 @@ def test_feed_requires_login_and_valid_page(client, db):
     assert client.get("/feed", follow_redirects=False).status_code == 303
     register(client, db)
     assert client.get("/feed?page=0").status_code == 422
-    assert "Лента откроется" in client.get("/feed").text
+    assert uk("feed.not_ready") in client.get("/feed").text
 
 
 @pytest.mark.slow

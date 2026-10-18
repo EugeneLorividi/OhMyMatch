@@ -8,7 +8,7 @@ def test_matched_axes_only_names():
     viewer = profile(dominant=90, sadist=80, rigger=70)
     candidate = her(submissive=85, masochist=95, rope_bunny=70)
     explanation = explain(score_match(viewer, candidate))
-    assert explanation.matched == ("власть", "боль", "верёвки")
+    assert explanation.matched == ("power", "pain", "rope")
     assert explanation.curious == ()
     names = {c.name.lower() for c in CATEGORIES} | {c.key for c in CATEGORIES}
     for label in explanation.matched:
@@ -18,22 +18,22 @@ def test_matched_axes_only_names():
 def test_axis_ranked_by_strength():
     viewer = profile(dominant=70, sadist=95)
     candidate = her(submissive=70, masochist=95)
-    assert explain(score_match(viewer, candidate)).matched == ("боль", "власть")
+    assert explain(score_match(viewer, candidate)).matched == ("pain", "power")
 
 
 def test_curious_axes_are_separate():
     viewer = profile(mode="experimental", dominant=90, brat_tamer=80)
     candidate = her(submissive=80, brat=40)
     explanation = explain(score_match(viewer, candidate))
-    assert explanation.matched == ("власть",)
-    assert explanation.curious == ("игра",)
+    assert explanation.matched == ("power",)
+    assert explanation.curious == ("play",)
 
 
 def test_axis_with_strict_and_curious_pairs_counts_as_matched():
     viewer = profile(mode="experimental", dominant=90, owner=90)
     candidate = her(submissive=80, pet=40)
     explanation = explain(score_match(viewer, candidate))
-    assert explanation.matched == ("власть",)
+    assert explanation.matched == ("power",)
     assert explanation.curious == ()
 
 

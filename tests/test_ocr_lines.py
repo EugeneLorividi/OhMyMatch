@@ -1,5 +1,6 @@
 """OCR line parsing without Tesseract: fuzzy names, uncertainty flags, merging."""
 
+from app.i18n import msg
 from app.parsing.ocr_parser import OcrLine, fuzzy_match, parse_lines
 
 
@@ -54,7 +55,7 @@ def test_out_of_range_is_flagged():
     result = parse_lines(lines("192% Sadist"))
     assert "sadist" not in result.values
     assert "sadist" in result.flagged
-    assert "вне диапазона" in result.errors[0]
+    assert result.errors[0].key == "ocr.out_of_range"
 
 
 def test_unpaired_category_is_flagged():
@@ -81,10 +82,10 @@ def test_conflicting_readings_keep_more_confident_and_flag():
     result = parse_lines([OcrLine("79% Dominant", 70.0), OcrLine("19% Dominant", 95.0)])
     assert result.values["dominant"] == 19
     assert "dominant" in result.flagged
-    assert "по-разному" in result.errors[0]
+    assert result.errors[0] == msg("ocr.conflict", category="Dominant", first=79, second=19)
 
 
 def test_unknown_name_with_percent_is_reported():
     result = parse_lines(lines("55% Weather"))
     assert result.values == {}
-    assert result.errors == ["Не удалось распознать категорию «Weather»."]
+    assert result.errors == [msg("ocr.unknown_category", name="Weather")]

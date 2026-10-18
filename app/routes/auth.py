@@ -12,6 +12,7 @@ from app.config import CONSENT_VERSION, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH
 from app.csrf import rotate_csrf_token
 from app.db.session import get_db
 from app.handles import generate_handle, is_generated_handle
+from app.i18n import Msg, msg
 from app.models import Invite, User
 from app.security import (
     generate_code,
@@ -28,18 +29,18 @@ router = APIRouter()
 Db = Annotated[Session, Depends(get_db)]
 FormStr = Annotated[str, Form()]
 
-INVALID_INVITE = "Код недействителен, уже использован или истёк."
-INVALID_LOGIN = "Неверный ник или пароль."
-INVALID_RECOVERY = "Неверный ник или код восстановления."
+INVALID_INVITE = msg("error.invalid_invite")
+INVALID_LOGIN = msg("error.invalid_login")
+INVALID_RECOVERY = msg("error.invalid_recovery")
 
 
-def _password_errors(password: str, confirm: str) -> list[str]:
+def _password_errors(password: str, confirm: str) -> list[Msg]:
     if len(password) < PASSWORD_MIN_LENGTH:
-        return [f"Пароль должен быть не короче {PASSWORD_MIN_LENGTH} символов."]
+        return [msg("error.password_short", min=PASSWORD_MIN_LENGTH)]
     if len(password) > PASSWORD_MAX_LENGTH:
-        return [f"Пароль должен быть не длиннее {PASSWORD_MAX_LENGTH} символов."]
+        return [msg("error.password_long", max=PASSWORD_MAX_LENGTH)]
     if password != confirm:
-        return ["Пароли не совпадают."]
+        return [msg("error.password_mismatch")]
     return []
 
 
@@ -66,7 +67,7 @@ def _register_details(
     request: Request,
     code: str,
     handle: str,
-    errors: list[str] | None = None,
+    errors: list[Msg] | None = None,
     status_code: int = 200,
     **checked: bool,
 ) -> Response:
@@ -101,12 +102,12 @@ def register(
 
     errors = []
     if age_confirmed != "yes":
-        errors.append("Нужно подтвердить, что тебе есть 18 лет.")
+        errors.append(msg("error.age_required"))
     if consent != "yes":
-        errors.append("Нужно согласие с тем, что и зачем мы храним.")
+        errors.append(msg("error.consent_required"))
     if not is_generated_handle(handle):
         handle = generate_handle()
-        errors.append("Выбери ник из предложенных.")
+        errors.append(msg("error.pick_handle"))
     errors += _password_errors(password, password_confirm)
     checked = {"age_checked": age_confirmed == "yes", "consent_checked": consent == "yes"}
     if errors:
@@ -131,7 +132,7 @@ def register(
         db.flush()
     except IntegrityError:
         db.rollback()
-        taken = ["Этот ник только что заняли, вот другой."]
+        taken = [msg("error.handle_taken")]
         return _register_details(request, code, generate_handle(), taken, 409, **checked)
     invite.used_by = user.id
     invite.used_at = now

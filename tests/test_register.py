@@ -6,7 +6,7 @@ from app.auth import SESSION_COOKIE
 from app.config import CONSENT_VERSION
 from app.models import Invite, User, UserSession
 from app.security import normalize_code, verify_secret
-from tests.helpers import PASSWORD, handle_from, make_invite, post, register
+from tests.helpers import PASSWORD, handle_from, make_invite, post, register, uk
 
 
 def details(code, handle, **overrides):
@@ -66,7 +66,7 @@ def test_session_cookie_flags(client, db):
 def test_invalid_code(client):
     response = post(client, "/register", {"step": "code", "invite_code": "AAAA-BBBB-CCCC-DDDD"})
     assert response.status_code == 400
-    assert "Код недействителен" in response.text
+    assert uk("error.invalid_invite") in response.text
 
 
 def test_code_is_case_and_dash_insensitive(client, db):
@@ -119,7 +119,7 @@ def test_rejects_free_text_handle(client, db):
     code = make_invite(db)
     response = post(client, "/register", details(code, "anna-smith-1990"))
     assert response.status_code == 400
-    assert "Выбери ник из предложенных" in response.text
+    assert uk("error.pick_handle") in response.text
     assert db.scalars(select(User)).first() is None
 
 

@@ -1,38 +1,39 @@
 {% extends "base.html" %}
-{% block title %}Результат теста · OhMyMatch{% endblock %}
+{% block title %}{{ t("result.title") }} · OhMyMatch{% endblock %}
 {% block content %}
-  <h1>Результат теста</h1>
-  <p>Пройди тест на bdsmtest.org и перенеси результат сюда. Мы сохраним только 25 чисел: ни текст, ни ссылку, ни скриншот не храним.</p>
+  <h1>{{ t("result.title") }}</h1>
+  <p>{{ t("result.intro") }}</p>
+  <p class="notice">{{ t("result.english_hint") }}</p>
 
   <section class="tab">
-    <h2>Вставить текст</h2>
-    <p>Скопируй список со страницы результата: строки вида <code>92% Rigger</code>. Ссылку и заголовки можно не убирать.</p>
+    <h2>{{ t("result.paste_title") }}</h2>
+    <p>{{ t("result.paste_intro") }}</p>
     <form method="post" action="/result/parse-text">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <label for="text">Текст результата</label>
+      <label for="text">{{ t("result.paste_label") }}</label>
       <textarea id="text" name="text" rows="10" maxlength="{{ paste_max }}" required spellcheck="false" autocomplete="off"></textarea>
-      <button type="submit">Распознать</button>
+      <button type="submit">{{ t("result.recognise") }}</button>
     </form>
   </section>
 
   <section class="tab">
-    <h2>Загрузить скрин</h2>
-    <p>До {{ ocr_max_files }} скриншотов страницы результата, jpeg, png или webp, до 8 МБ каждый. Скриншоты не сохраняются: они распознаются в памяти и сразу удаляются.</p>
+    <h2>{{ t("result.upload_title") }}</h2>
+    <p>{{ t("result.upload_intro", max=ocr_max_files) }}</p>
     <form method="post" action="/result/parse-image" enctype="multipart/form-data">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <label for="images">Скриншоты</label>
+      <label for="images">{{ t("result.upload_label") }}</label>
       <input id="images" name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required>
-      <button type="submit">Распознать</button>
-      <p class="notice" data-wait hidden>Распознаём, это может занять до полуминуты…</p>
+      <button type="submit">{{ t("result.recognise") }}</button>
+      <p class="notice" data-wait hidden>{{ t("result.wait") }}</p>
     </form>
   </section>
 
   <section>
-    <h2>Проверь и подтверди</h2>
-    {% if ocr %}<p class="warning" role="alert">Распознавание неточное. Проверь цифры перед сохранением.</p>{% endif %}
+    <h2>{{ t("result.confirm_title") }}</h2>
+    {% if ocr %}<p class="warning" role="alert">{{ t("result.ocr_warning") }}</p>{% endif %}
     {% include "_errors.html" %}
-    {% if notice %}<p class="notice">{{ notice }}</p>{% endif %}
-    {% if flagged %}<p class="notice">Подсвеченные поля нужно проверить или заполнить вручную.</p>{% endif %}
+    {% if notice %}<p class="notice">{{ tm(notice) }}</p>{% endif %}
+    {% if flagged %}<p class="notice">{{ t("result.flagged_hint") }}</p>{% endif %}
     <form method="post" action="/result/save">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <div class="scores">
@@ -45,7 +46,7 @@
           </label>
         {% endfor %}
       </div>
-      <button type="submit">Подтвердить и сохранить</button>
+      <button type="submit">{{ t("result.save") }}</button>
     </form>
   </section>
 {% endblock %}

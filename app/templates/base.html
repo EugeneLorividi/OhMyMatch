@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="{{ lang }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,19 +15,20 @@
     <a class="brand" href="/">OhMyMatch</a>
     <nav>
       {% if user %}
-        <a href="/feed">Лента</a>
-        <a href="/profile">Профиль</a>
-        <a href="/result">Результат</a>
-        <a href="/dislikes">Список «нет»</a>
+        <a href="/feed">{{ t("nav.feed") }}</a>
+        <a href="/profile">{{ t("nav.profile") }}</a>
+        <a href="/result">{{ t("nav.result") }}</a>
+        <a href="/dislikes">{{ t("nav.dislikes") }}</a>
         <span class="handle">{{ user.handle }}</span>
         <form method="post" action="/logout" class="inline">
           <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-          <button type="submit" class="link">Выйти</button>
+          <button type="submit" class="link">{{ t("nav.logout") }}</button>
         </form>
       {% else %}
-        <a href="/login">Вход</a>
-        <a href="/register">Регистрация</a>
+        <a href="/login">{{ t("nav.login") }}</a>
+        <a href="/register">{{ t("nav.register") }}</a>
       {% endif %}
+      <a href="/lang/{{ other_lang }}?next={{ request.url.path | urlencode }}" hreflang="{{ other_lang }}" lang="{{ other_lang }}">{{ t("lang.switch") }}</a>
     </nav>
   </header>
   <main>

@@ -23,9 +23,27 @@ server {
     # No query strings in logs (spec section 9)
     access_log /var/log/nginx-ohmymatch/access.log combined_noqs;
 
+    # Default body limit for everything except screenshot upload.
+    client_max_body_size 1m;
+
+    # OCR upload: up to 3 images of 8 MB each (spec section 5.2).
+    location = /result/parse-image {
+        client_max_body_size 25m;
+
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Connection "";
+    }
+
     location / {
-        # proxy_pass http://127.0.0.1:8000;
-        default_type text/plain;
-        return 200 "ohmymatch: placeholder\n";
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Connection "";
     }
 }

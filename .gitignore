@@ -10,3 +10,8 @@ __pycache__/
 *.dump
 *.age
 backups/
+*.env
+!.env.example
+*.egg-info/
+.coverage
+htmlcov/

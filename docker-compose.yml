@@ -1,0 +1,40 @@
+name: ohmymatch
+
+services:
+  app:
+    build: .
+    image: ohmymatch-app
+    restart: unless-stopped
+    env_file: ${HOME}/secrets/ohmymatch.env
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - backend
+      - edge
+    tmpfs:
+      - /tmp
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17.11-alpine3.24
+    restart: unless-stopped
+    env_file: ${HOME}/secrets/ohmymatch.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+networks:
+  backend:
+    internal: true
+  edge: {}
+
+volumes:
+  pgdata:

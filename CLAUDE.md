@@ -1,6 +1,6 @@
 # OhMyMatch: rules for Claude Code
 
-Spec: docs/TZ.md. It is the source of truth. Follow section 12 stage by stage.
+Spec: docs/SPEC.md. It is the source of truth. Follow section 12 stage by stage.
 
 ## Workflow
 - Work on ONE stage at a time. Run tests and ruff before finishing a stage. Do not start the next stage until tests are green.
@@ -26,6 +26,6 @@ Spec: docs/TZ.md. It is the source of truth. Follow section 12 stage by stage.
 ## Autonomy
 - Decide routine things yourself: library versions (look them up, never guess), file layout, naming, test design, small refactors, fixing failing tests and lint. Pick the safer, simpler option and note the decision in one line in docs/DECISIONS.md.
 - Go through stages 2, 3, 4... in order without waiting for me. After each stage: ruff, pytest and a docker compose check must pass, then commit locally in English. Never push.
-- STOP and ask me ONLY if: a stage needs a decision that changes the spec or data model; something must be installed or changed outside ~/ohmymatch; a secret or real user data would be touched; two attempts to fix a failing check did not work; you want to deviate from TZ.md.
-- Never ask for confirmation of things already covered by CLAUDE.md or TZ.md.
+- STOP and ask me ONLY if: a stage needs a decision that changes the spec or data model; something must be installed or changed outside ~/ohmymatch; a secret or real user data would be touched; two attempts to fix a failing check did not work; you want to deviate from docs/SPEC.md.
+- Never ask for confirmation of things already covered by CLAUDE.md or docs/SPEC.md.
 - Stop after the end of stage 5 (matching) and give me a summary: what was done, decisions made, open risks.

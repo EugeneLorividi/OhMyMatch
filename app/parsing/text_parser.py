@@ -45,16 +45,23 @@ def match_name(name: str) -> str | None:
     return _CANONICAL.get(normalized) or ALIASES.get(normalized)
 
 
+def split_line(raw: str) -> tuple[int, str] | None:
+    """Returns (percent, name) for a `N% Name` line, None for any other line."""
+    match = LINE_RE.match(normalize_spaces(raw).translate(_PERCENT_SIGNS))
+    if match is None:
+        return None
+    return int(match.group(1)), match.group(2)
+
+
 def parse_text(text: str) -> ParseResult:
     result = ParseResult()
     seen_on: dict[str, tuple[int, int]] = {}
     conflicting: set[str] = set()
     for number, raw in enumerate(text.splitlines(), start=1):
-        line = normalize_spaces(raw).translate(_PERCENT_SIGNS)
-        match = LINE_RE.match(line)
-        if match is None:
+        parts = split_line(raw)
+        if parts is None:
             continue
-        percent, name = int(match.group(1)), match.group(2)
+        percent, name = parts
         key = match_name(name)
         if key is None:
             result.errors.append(f"Строка {number}: неизвестная категория «{name}».")

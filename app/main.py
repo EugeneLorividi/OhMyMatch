@@ -5,8 +5,9 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.auth import LoginRequired
-from app.config import settings
+from app.config import MAX_BODY_BYTES, MAX_UPLOAD_BODY_BYTES, settings
 from app.csrf import set_csrf_cookie, verify_csrf
+from app.limits import BodySizeLimit
 from app.routes import auth, pages, profile, result
 
 app = FastAPI(
@@ -28,6 +29,14 @@ async def csrf_cookie(request: Request, call_next):
     response = await call_next(request)
     set_csrf_cookie(request, response)
     return response
+
+
+# Added last, so it is the outermost layer and runs before any body parsing.
+app.add_middleware(
+    BodySizeLimit,
+    default=MAX_BODY_BYTES,
+    per_path={"/result/parse-image": MAX_UPLOAD_BODY_BYTES},
+)
 
 
 @app.exception_handler(LoginRequired)

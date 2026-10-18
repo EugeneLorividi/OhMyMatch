@@ -48,3 +48,20 @@ One line per decision. Newest at the bottom of each stage.
 - Pages are plain server-rendered forms (no HTMX yet); HTMX gets vendored when the feed needs it.
 - The screenshot tab shows a placeholder until stage 4.
 - Result pages are sent with `Cache-Control: no-store` because they contain the user's own percentages.
+
+## Stage 4: OCR
+- Tesseract 5.5.0 (`tesseract-ocr`, `tesseract-ocr-eng` from Debian trixie) is installed in the app image; apt package versions follow the pinned base image.
+- Tesseract is not installed on the host (would need sudo); the full suite runs in the `test` image via `docker compose -f compose.test.yml run --rm tests`. On the host, Tesseract-dependent tests skip; with `REQUIRE_TESSERACT=1` (CI, test image) they fail instead.
+- CI installs `tesseract-ocr` from Ubuntu apt on the runner.
+- App container runs with `read_only: true` and tmpfs `/tmp`; uploads spooled by Starlette and pytesseract temp files only ever land in tmpfs.
+- Images are validated by content with Pillow (JPEG, PNG, WEBP only), max 8 MB and 40 MP, EXIF orientation applied, then rebuilt from raw pixels so no metadata survives.
+- Preprocessing: grayscale, upscale x3 (longest side < 1000 px) or x2, capped at 30 MP; invert if mean < 128; OpenCV Gaussian adaptive threshold (block 31, C 15).
+- Lines are grouped from `image_to_data` by page/block/paragraph/line; line confidence is the lowest word confidence.
+- Name matching: exact or alias first, then rapidfuzz `ratio` over names and aliases. >= 85 is certain; 70..85 is filled but flagged; < 70 is not a category. A runner-up within 5 points also flags.
+- Flagged: fuzzy score below 85, ambiguous name, Tesseract confidence below 60, out of range, category name without a percent, conflicting readings, missing.
+- Across several screenshots, repeated lines with the same value merge quietly (screenshots overlap); different values keep the more confident one, flag it and report it.
+- Concurrency: process-wide semaphore of 2 OCR jobs, wait up to 30 s, then 503. `OMP_THREAD_LIMIT=1` keeps Tesseract from taking every core on the shared VPS.
+- Per-user OCR rate limit is deferred to stage 7 with the other limits.
+- Body size limit middleware (pure ASGI, outermost): 1 MiB by default, 25 MiB on `/result/parse-image`, same as nginx. Overflow returns 413 even for chunked bodies.
+- Wait indicator: tiny same-origin `static/app.js` (shows the indicator, disables submit). No HTMX yet.
+- Synthetic OCR fixtures are rendered at test time with Pillow's built-in font; no image files are committed.

@@ -3,15 +3,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
-from starlette.datastructures import FormData
+from starlette.datastructures import FormData, UploadFile
 
 from app.accounts import refresh_is_active
 from app.auth import RequiredUser
 from app.categories import CATEGORIES, CATEGORY_KEYS
-from app.config import PASTE_MAX_CHARS
+from app.config import OCR_MAX_FILE_BYTES, OCR_MAX_FILES, OCR_QUEUE_WAIT_SECONDS, PASTE_MAX_CHARS
 from app.db.session import get_db
 from app.forms import form_data
 from app.models import TestScore, User
+from app.parsing import ocr_parser
 from app.parsing.text_parser import parse_text
 from app.templating import render
 
@@ -31,6 +32,7 @@ def _result_page(
     errors: list[str] | None = None,
     notice: str | None = None,
     status_code: int = 200,
+    ocr: bool = False,
 ) -> Response:
     context = {
         "user": user,
@@ -41,6 +43,8 @@ def _result_page(
         "notice": notice,
         "field_prefix": FIELD_PREFIX,
         "paste_max": PASTE_MAX_CHARS,
+        "ocr_max_files": OCR_MAX_FILES,
+        "ocr": ocr,
     }
     # The page carries the user's own percentages: keep it out of any cache.
     return render(request, "result.html", context, status_code, no_store=True)
@@ -64,6 +68,36 @@ def parse_result_text(request: Request, user: RequiredUser, form: Form) -> Respo
     found = len(parsed.values)
     notice = f"Найдено {found} из {len(CATEGORY_KEYS)}. Проверь значения и подтверди."
     return _result_page(request, user, parsed.values, parsed.flagged, parsed.errors, notice)
+
+
+@router.post("/result/parse-image")
+def parse_result_image(request: Request, user: RequiredUser, form: Form) -> Response:
+    uploads = [u for u in form.getlist("images") if isinstance(u, UploadFile) and u.filename]
+    if not uploads:
+        error = "Выбери хотя бы один скриншот."
+        return _result_page(request, user, {}, errors=[error], status_code=400)
+    if len(uploads) > OCR_MAX_FILES:
+        error = f"Не больше {OCR_MAX_FILES} изображений за раз."
+        return _result_page(request, user, {}, errors=[error], status_code=400)
+    blobs = [upload.file.read(OCR_MAX_FILE_BYTES + 1) for upload in uploads]
+
+    if not ocr_parser.slots.acquire(timeout=OCR_QUEUE_WAIT_SECONDS):
+        error = "Сейчас распознаётся слишком много скриншотов. Попробуй через минуту."
+        return _result_page(request, user, {}, errors=[error], status_code=503)
+    try:
+        parsed = ocr_parser.parse_images(blobs)
+    except ocr_parser.ImageRejected as exc:
+        return _result_page(request, user, {}, errors=[str(exc)], status_code=400)
+    except RuntimeError:  # Tesseract timeout
+        error = "Не получилось распознать вовремя. Попробуй скриншот поменьше."
+        return _result_page(request, user, {}, errors=[error], status_code=503)
+    finally:
+        ocr_parser.slots.release()
+
+    notice = f"Найдено {len(parsed.values)} из {len(CATEGORY_KEYS)}."
+    return _result_page(
+        request, user, parsed.values, parsed.flagged, parsed.errors, notice, ocr=True
+    )
 
 
 def _read_scores(form: FormData) -> tuple[dict[str, int | str], dict[str, int], set[str]]:

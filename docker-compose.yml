@@ -2,7 +2,9 @@ name: ohmymatch
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      target: runtime
     image: ohmymatch-app
     restart: unless-stopped
     env_file: ${HOME}/secrets/ohmymatch.env
@@ -11,6 +13,8 @@ services:
     networks:
       - backend
       - edge
+    # Nothing may be written outside tmpfs (section 5.2: no screenshots on disk).
+    read_only: true
     tmpfs:
       - /tmp
     depends_on:

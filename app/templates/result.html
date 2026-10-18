@@ -17,11 +17,19 @@
 
   <section class="tab">
     <h2>Загрузить скрин</h2>
-    <p class="muted">Распознавание скриншотов появится позже. Пока вставь текст или заполни поля вручную.</p>
+    <p>До {{ ocr_max_files }} скриншотов страницы результата, jpeg, png или webp, до 8 МБ каждый. Скриншоты не сохраняются: они распознаются в памяти и сразу удаляются.</p>
+    <form method="post" action="/result/parse-image" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label for="images">Скриншоты</label>
+      <input id="images" name="images" type="file" accept="image/jpeg,image/png,image/webp" multiple required>
+      <button type="submit">Распознать</button>
+      <p class="notice" data-wait hidden>Распознаём, это может занять до полуминуты…</p>
+    </form>
   </section>
 
   <section>
     <h2>Проверь и подтверди</h2>
+    {% if ocr %}<p class="warning" role="alert">Распознавание неточное. Проверь цифры перед сохранением.</p>{% endif %}
     {% include "_errors.html" %}
     {% if notice %}<p class="notice">{{ notice }}</p>{% endif %}
     {% if flagged %}<p class="notice">Подсвеченные поля нужно проверить или заполнить вручную.</p>{% endif %}

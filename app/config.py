@@ -28,3 +28,21 @@ MODES: dict[str, str] = {"normal": "Обычный", "experimental": "Экспе
 
 # Result input
 PASTE_MAX_CHARS = 20_000
+
+# Screenshot OCR (section 5.2)
+OCR_MAX_FILES = 3
+OCR_MAX_FILE_BYTES = 8 * 1024 * 1024
+OCR_FORMATS = frozenset({"JPEG", "PNG", "WEBP"})
+OCR_MAX_INPUT_PIXELS = 40_000_000
+OCR_MAX_WORK_PIXELS = 30_000_000  # after upscaling
+OCR_FUZZY_THRESHOLD = 85  # rapidfuzz score; below this a name is uncertain
+OCR_FUZZY_FLOOR = 70  # below this the line is not treated as a category at all
+OCR_FUZZY_MARGIN = 5  # runner-up this close to the best match makes it uncertain
+OCR_MIN_CONFIDENCE = 60  # Tesseract word confidence
+OCR_CONCURRENCY = 2
+OCR_QUEUE_WAIT_SECONDS = 30
+OCR_TESSERACT_TIMEOUT_SECONDS = 20
+
+# Request body limits; nginx enforces the same outside.
+MAX_BODY_BYTES = 1024 * 1024
+MAX_UPLOAD_BODY_BYTES = 25 * 1024 * 1024

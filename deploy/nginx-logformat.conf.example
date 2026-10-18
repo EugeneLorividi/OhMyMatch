@@ -1,0 +1,1 @@
+log_format combined_noqs '$remote_addr - [$time_local] "$request_method $uri" $status $body_bytes_sent';

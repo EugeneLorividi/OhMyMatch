@@ -20,3 +20,10 @@ Spec: docs/TZ.md (in Russian). It is the source of truth. Follow section 12 stag
 - Docker is ROOTLESS under user `ohmymatch`. App container listens only on 127.0.0.1:8000.
 - Reverse proxy is the existing system nginx (not Caddy). Its config is managed by root, not by you. Only edit deploy/*.example files in the repo.
 - No sudo. Do not touch anything outside ~/ohmymatch and this user's Docker. Other sites and services on this server are off limits.
+
+## Autonomy
+- Decide routine things yourself: library versions (look them up, never guess), file layout, naming, test design, small refactors, fixing failing tests and lint. Pick the safer, simpler option and note the decision in one line in docs/DECISIONS.md.
+- Go through stages 2, 3, 4... in order without waiting for me. After each stage: ruff, pytest and a docker compose check must pass, then commit locally in English. Never push.
+- STOP and ask me ONLY if: a stage needs a decision that changes the spec or data model; something must be installed or changed outside ~/ohmymatch; a secret or real user data would be touched; two attempts to fix a failing check did not work; you want to deviate from TZ.md.
+- Never ask for confirmation of things already covered by CLAUDE.md or TZ.md.
+- Stop after the end of stage 5 (matching) and give me a summary: what was done, decisions made, open risks.

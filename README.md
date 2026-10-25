@@ -32,6 +32,7 @@ python3.12 -m venv .venv && .venv/bin/pip install uv
 docker compose up -d --build                   # app on 127.0.0.1:8000, db on an internal network
 docker compose run --rm app alembic upgrade head
 docker compose run --rm app python -m app.cli invite --count 1 --ttl-days 7
+docker compose run --rm app python -m app.cli delete-user <handle>   # asks to type the nickname again
 ```
 
 ## Tests

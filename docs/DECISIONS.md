@@ -144,3 +144,4 @@ One line per decision. Newest at the bottom of each stage.
 - Removed `GET, POST /recover`, its templates, its rate limits and the code shown after sign-up. The login page and the sign-up confirmation now say that a forgotten password cannot be recovered and needs a new invite and a new account.
 - Consent and `/privacy` no longer list a recovery code hash: `CONSENT_VERSION` bumped to `2026-10-25.1`. Existing accounts keep their old version string; there is no re-consent flow (none is specified).
 - A forgotten account stays in the database and in other people's feeds until its owner deletes it, which needs the password. Noted as an open risk for the owner.
+- Admin CLI `delete-user <handle>`: shows nickname and creation date only, requires the nickname typed again (EOF or any other answer aborts, exit 1, no `--yes` bypass), then hard-deletes the user row so every table cascades, the same as account deletion. Added to the spec on owner request.

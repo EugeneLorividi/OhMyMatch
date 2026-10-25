@@ -1,0 +1,5 @@
+# crontab for user ohmymatch (crontab -e). Daily encrypted backup at 03:30 UTC.
+# Rootless Docker needs its socket; the log gets only compose status and "backup_written".
+XDG_RUNTIME_DIR=/run/user/1002
+DOCKER_HOST=unix:///run/user/1002/docker.sock
+30 3 * * * cd "$HOME/ohmymatch" && docker compose --profile ops run --rm backup >> "$HOME/ohmymatch/backups/backup.log" 2>&1

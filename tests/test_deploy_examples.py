@@ -50,3 +50,19 @@ def test_csp_matches_between_app_and_nginx():
 
     example = (ROOT / "deploy/nginx.conf.example").read_text()
     assert f'add_header Content-Security-Policy "{CSP}" always;' in example
+
+
+def test_logrotate_example_matches_nginx_log_and_keeps_at_most_7_days():
+    nginx = (ROOT / "deploy/nginx.conf.example").read_text()
+    rotate = (ROOT / "deploy/logrotate-ohmymatch.example").read_text()
+    log_path = re.search(r"access_log (\S+) combined_noqs;", nginx).group(1)
+    assert rotate.split("{")[0].split()[-1] == log_path
+    assert int(re.search(r"rotate (\d+)", rotate).group(1)) + 1 <= 7
+    assert int(re.search(r"maxage (\d+)", rotate).group(1)) <= 7
+    assert "daily" in rotate
+
+
+def test_crontab_example_runs_the_backup_service():
+    cron = (ROOT / "deploy/crontab.example").read_text()
+    assert "docker compose --profile ops run --rm backup" in cron
+    assert "DOCKER_HOST=unix:///run/user/" in cron

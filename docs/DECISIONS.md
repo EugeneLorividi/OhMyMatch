@@ -145,3 +145,10 @@ One line per decision. Newest at the bottom of each stage.
 - Consent and `/privacy` no longer list a recovery code hash: `CONSENT_VERSION` bumped to `2026-10-25.1`. Existing accounts keep their old version string; there is no re-consent flow (none is specified).
 - A forgotten account stays in the database and in other people's feeds until its owner deletes it, which needs the password. Noted as an open risk for the owner.
 - Admin CLI `delete-user <handle>`: shows nickname and creation date only, requires the nickname typed again (EOF or any other answer aborts, exit 1, no `--yes` bypass), then hard-deletes the user row so every table cascades, the same as account deletion. Added to the spec on owner request.
+
+## Stage 8: deployment
+- The server side is root-managed: the vhost and certificate for `ohmymatch.xyz` exist, DNS already points here, but nginx still serves a placeholder. The app does not edit system files; `docs/DEPLOY.md` lists the owner and root steps and their state.
+- `deploy/logrotate-ohmymatch.example` added: the live rule rotates a path nginx no longer writes. Today's file plus 6 rotated days, `maxage 7`, new files 0640.
+- `deploy/crontab.example` added for the daily backup (user crontab, rootless Docker socket set explicitly).
+- `server_tokens off` added to the nginx example.
+- Production secrets and the real age key are owner steps; the current env file holds development values.

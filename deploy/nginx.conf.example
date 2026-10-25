@@ -2,6 +2,7 @@ server {
     listen 80;
     listen [::]:80;
     server_name ohmymatch.xyz;
+    server_tokens off;
     return 301 https://$host$request_uri;
 }
 
@@ -13,6 +14,7 @@ server {
     ssl_certificate     /etc/letsencrypt/live/ohmymatch.xyz/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/ohmymatch.xyz/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
+    server_tokens off;
 
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     add_header X-Content-Type-Options "nosniff" always;

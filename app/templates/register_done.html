@@ -3,6 +3,6 @@
 {% block content %}
   <h1>{{ t("register.done_title") }}</h1>
   <p>{{ t("register.your_handle") }} <strong class="handle">{{ user.handle }}</strong></p>
-  {% include "_recovery_code.html" %}
+  <p><strong>{{ t("register.remember") }}</strong></p>
   <p><a href="/">{{ t("register.done_continue") }}</a></p>
 {% endblock %}

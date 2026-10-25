@@ -13,23 +13,22 @@ One line per decision. Newest at the bottom of each stage.
 - Kept `httpx` (not `httpx2`) for the test client; the Starlette deprecation warning is accepted for now.
 
 ## Stage 2: access
-- Owner decision: added `users.recovery_code_hash` (argon2id); not in the section 6 field list but required by sections 4 and 9.
-- Owner decision: added `GET, POST /recover` (handle + recovery code + new password; issues a new code, wipes all sessions).
+- Owner decision: added `users.recovery_code_hash` and `GET, POST /recover`. Removed later, see "Recovery code removed".
 - Owner decision: added `users.is_active` (default false; set in stage 3 once profile and scores are complete), matching the section 6 index.
 - `users.gender` and `users.seeking` are nullable: they are filled on the profile page after registration.
 - Session cookie holds a random token; `sessions.id` is a UUID built from its SHA-256, so a DB leak does not leak live tokens.
 - Session lifetime is 7 days (`SESSION_TTL`); expired sessions are deleted on access and on login.
 - Cookies use the `__Host-` prefix: Secure, HttpOnly, SameSite=Lax, Path=/.
-- CSRF: double-submit token in a `__Host-csrf` cookie, checked by an app-wide dependency on every non-GET request; accepted from form field `csrf_token` or header `X-CSRF-Token` (HTMX via `hx-headers` on `<body>`). Rotated on login, logout, registration and recovery.
-- Invite and recovery codes: 16 chars from a 30-char unambiguous alphabet (~78 bits), shown as `XXXX-XXXX-XXXX-XXXX`, case/dash insensitive. See the deviation below for recovery codes.
-- Invite codes are stored as SHA-256 (high entropy, looked up by hash); passwords and recovery codes as argon2id.
+- CSRF: double-submit token in a `__Host-csrf` cookie, checked by an app-wide dependency on every non-GET request; accepted from form field `csrf_token` or header `X-CSRF-Token` (HTMX via `hx-headers` on `<body>`). Rotated on login, logout and registration.
+- Invite codes: 16 chars from a 30-char unambiguous alphabet (~78 bits), shown as `XXXX-XXXX-XXXX-XXXX`, case/dash insensitive.
+- Invite codes are stored as SHA-256 (high entropy, looked up by hash); passwords as argon2id.
 - Handles are `adjective-noun-NN` from fixed word lists; the server only accepts strings that match the generator, so no free text gets in.
 - Registration is two steps: invite code, then 18+, consent, handle, password; the invite is re-checked under `SELECT ... FOR UPDATE` at the final step.
 - Password length 10 to 128 chars, no other composition rules.
-- Login and recovery errors are identical for unknown handles and wrong secrets; a dummy argon2 verify keeps timing similar.
+- Login errors are identical for unknown handles and wrong secrets; a dummy argon2 verify keeps timing similar.
 - `CONSENT_VERSION = "2026-10-18"`; consent text lives in `templates/_consent.html` and will be reused by `/privacy` in stage 7. (Bumped later, see Languages.)
 - Password change (`POST /account/password`) is deferred to stage 7 together with account deletion on the settings page.
-- Rate limits for login, registration and recovery are deferred to stage 7 as the spec plans.
+- Rate limits for login and registration are deferred to stage 7 as the spec plans.
 - Tests run against real PostgreSQL: `compose.test.yml` (tmpfs, 127.0.0.1:55432, synthetic credentials) locally, a service container in CI. Tests refuse to run without `TEST_DATABASE_URL`.
 - `/robots.txt` disallows all crawling.
 
@@ -96,7 +95,7 @@ One line per decision. Newest at the bottom of each stage.
 - Tests check that both locales have the same keys and placeholders, and that every key used in code and templates exists.
 
 ## Deviations
-- Recovery codes have ~78 bits of entropy (16 symbols from a 30-symbol alphabet), below the usual 128-bit guidance for long-lived secrets. Accepted for typability; mitigated by argon2id hashing (offline guessing is slow) and by per-handle and per-IP limits on `/recover` (stage 7). Revisit if codes ever need to resist offline attacks without the hash cost.
+- None open. (The recovery code entropy deviation went away with the recovery code.)
 
 ## Stage 6: reactions and matches
 - `matches` has a random UUID `id` (plus unique `(user_a, user_b)` and CHECK `user_a < user_b`): section 6 lists only the pair, but sections 8 and 10 address a match by id (`/matches/{id}/remove`, `on_match(match_id)`).
@@ -114,7 +113,7 @@ One line per decision. Newest at the bottom of each stage.
 
 ## Stage 7: privacy
 - Rate limiter is in memory (`app/ratelimit.py`), rolling windows, subjects stored only as HMAC-SHA256 (with `SECRET_KEY`) truncated to 16 bytes, pruned as windows expire. No DB table: nothing about request activity is persisted. Counters reset on restart; this assumes one app process (the default single uvicorn worker).
-- Limits (`config.py`): login 30/15 min per IP and 10 failed/15 min per handle; registration 20/h per IP; `/recover` 10/h per IP and 5 failed/h per handle; password change and deletion 10/h per account; OCR 20/day per user; feed 20 pages/day per user; reactions 100/day per user; result, "no" list and profile saves 5/day each per user. "Day" means a rolling 24 h.
+- Limits (`config.py`): login 30/15 min per IP and 10 failed/15 min per handle; registration 20/h per IP; password change and deletion 10/h per account; OCR 20/day per user; feed 20 pages/day per user; reactions 100/day per user; result, "no" list and profile saves 5/day each per user. "Day" means a rolling 24 h.
 - Per-handle limits count failures only, so a stranger cannot lock out a member who logs in correctly; per-IP limits count every attempt. Unknown handles are counted like real ones.
 - Failed validation does not use up a daily change; feed visits by inactive users (no feed yet) are not counted.
 - 429 responses carry `Retry-After`; HTMX requests get a 200 fragment with the message so HTMX swaps it.
@@ -138,3 +137,10 @@ One line per decision. Newest at the bottom of each stage.
 - `uk.json` reviewed line by line: calques and grammar fixed (sessions are now "ended", not "reset"; the admin sentence no longer calques the Russian "designed for a leak" construction; "prevent" got its required object; genitive after negation; "u/v" alternation at sentence start), the slang loanword for "invite" replaced by the native word for invitation, and gendered past-tense forms replaced by neutral phrasing. `CONSENT_VERSION` bumped to `2026-10-18.4`.
 - Kept loanwords common in Ukrainian dating and web UIs: match, like, screenshot, nick, cookie (each in its usual Ukrainian spelling).
 - Guard: Cyrillic is allowed only in `docs/SPEC.uk.md`, `app/locales/uk.json`, tests, and the language switch label in `en.json`; everywhere (those files included) Russian-only letters and a list of common Russian-only words fail the build.
+
+## Recovery code removed (2026-10-25)
+- Owner decision: no account recovery. Sign-in is nickname and password only; the spec (sections 4, 9, 10 and the open questions) now says so.
+- Migration `0004` drops `users.recovery_code_hash`; earlier migrations stay untouched because they are already applied and pushed. Its downgrade re-adds the column with an empty hash that matches nothing.
+- Removed `GET, POST /recover`, its templates, its rate limits and the code shown after sign-up. The login page and the sign-up confirmation now say that a forgotten password cannot be recovered and needs a new invite and a new account.
+- Consent and `/privacy` no longer list a recovery code hash: `CONSENT_VERSION` bumped to `2026-10-25.1`. Existing accounts keep their old version string; there is no re-consent flow (none is specified).
+- A forgotten account stays in the database and in other people's feeds until its owner deletes it, which needs the password. Noted as an open risk for the owner.

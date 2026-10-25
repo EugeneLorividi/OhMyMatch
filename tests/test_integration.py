@@ -13,7 +13,7 @@ from tests.helpers import PASSWORD, full_result_text, post, register, score_form
 
 def person(db, gender, seeking, **scores):
     client = TestClient(app, base_url="https://testserver")
-    handle, _, _ = register(client, db)
+    handle, _ = register(client, db)
     post(client, "/profile", {"gender": gender, "seeking": [seeking], "mode": "normal"})
     parsed = post(client, "/result/parse-text", {"text": full_result_text()})
     assert parsed.status_code == 200

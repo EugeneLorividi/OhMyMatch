@@ -24,7 +24,6 @@ def add_user(
     user = User(
         handle=f"{generate_handle()}-{uuid.uuid4().hex[:6]}",
         password_hash="x",
-        recovery_code_hash="x",
         gender=gender,
         seeking=list(seeking),
         mode=mode,
@@ -151,7 +150,6 @@ def test_feed_speed_with_1000_active_users(db):
                 "id": user_id,
                 "handle": f"perf-{index}",
                 "password_hash": "x",
-                "recovery_code_hash": "x",
                 "gender": rng.choice(["man", "woman", "other"]),
                 "seeking": rng.sample(["man", "woman", "other"], rng.randint(1, 3)),
                 "mode": rng.choice(["normal", "experimental"]),

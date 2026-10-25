@@ -11,5 +11,5 @@
     <input id="password" name="password" type="password" required maxlength="{{ password_max }}" autocomplete="current-password">
     <button type="submit">{{ t("login.submit") }}</button>
   </form>
-  <p><a href="/recover">{{ t("login.forgot") }}</a></p>
+  <p>{{ t("login.no_recovery") }}</p>
 {% endblock %}

@@ -62,7 +62,7 @@ def records():
 
 
 def test_log_lines_are_event_and_request_id_only(client, db, records):
-    handle, _, _ = register(client, db)
+    handle, _ = register(client, db)
     client.cookies.clear()
     post(client, "/login", {"handle": handle, "password": "wrong password!"})
     post(client, "/login", {"handle": handle, "password": PASSWORD})

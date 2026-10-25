@@ -14,7 +14,6 @@ button.link { margin: 0; padding: 0; background: none; border: none; color: inhe
 form.inline { display: inline; }
 .errors { border-left: 4px solid var(--error); padding: 0.25rem 0.75rem; margin: 1rem 0; }
 .consent { font-size: 0.9rem; border: 1px solid #8884; padding: 0 1rem; margin: 1rem 0; }
-.recovery .code { font: 1.4rem/1.2 ui-monospace, monospace; letter-spacing: 0.1em; }
 .handle { font-family: ui-monospace, monospace; }
 fieldset { border: 1px solid #8884; margin: 1rem 0; }
 textarea { width: 100%; font: 0.9rem/1.4 ui-monospace, monospace; padding: 0.5rem; }

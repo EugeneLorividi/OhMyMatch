@@ -5,7 +5,6 @@ from sqlalchemy import select
 from app.auth import SESSION_COOKIE
 from app.config import CONSENT_VERSION
 from app.models import Invite, User, UserSession
-from app.security import normalize_code, verify_secret
 from tests.helpers import PASSWORD, handle_from, make_invite, post, register, uk
 
 
@@ -24,7 +23,7 @@ def details(code, handle, **overrides):
 
 
 def test_full_registration(client, db):
-    handle, recovery_code, response = register(client, db)
+    handle, response = register(client, db)
     assert response.headers["cache-control"] == "no-store"
     assert handle in response.text
 
@@ -38,8 +37,6 @@ def test_full_registration(client, db):
     assert user.mode == "normal"
     assert user.password_hash.startswith("$argon2id$")
     assert PASSWORD not in user.password_hash
-    assert recovery_code not in user.recovery_code_hash
-    assert verify_secret(user.recovery_code_hash, normalize_code(recovery_code))
 
     invite = db.scalars(select(Invite)).one()
     assert invite.used_by == user.id
@@ -50,7 +47,7 @@ def test_full_registration(client, db):
 
 
 def test_session_cookie_flags(client, db):
-    _, _, response = register(client, db)
+    _, response = register(client, db)
     cookie = next(
         value
         for value in response.headers.get_list("set-cookie")
@@ -132,7 +129,7 @@ def test_password_rules(client, db):
 
 
 def test_taken_handle_offers_another(client, db):
-    handle, _, _ = register(client, db)
+    handle, _ = register(client, db)
     client.cookies.clear()
     code = make_invite(db)
     response = post(client, "/register", details(code, handle))

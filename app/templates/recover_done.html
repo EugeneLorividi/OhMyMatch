@@ -1,8 +1,0 @@
-{% extends "base.html" %}
-{% block title %}{{ t("recover.done_title") }} · OhMyMatch{% endblock %}
-{% block content %}
-  <h1>{{ t("recover.done_title") }}</h1>
-  <p>{{ t("recover.done_text") }}</p>
-  {% include "_recovery_code.html" %}
-  <p><a href="/">{{ t("recover.done_continue") }}</a></p>
-{% endblock %}

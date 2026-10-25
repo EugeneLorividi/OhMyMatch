@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from app.auth import SESSION_COOKIE
 from app.models import UserSession
@@ -12,7 +12,7 @@ def login(client, handle, password=PASSWORD):
 
 
 def test_login_and_logout(client, db):
-    handle, _, _ = register(client, db)
+    handle, _ = register(client, db)
     client.cookies.clear()
     assert handle not in client.get("/").text
 
@@ -28,7 +28,7 @@ def test_login_and_logout(client, db):
 
 
 def test_wrong_password_and_unknown_handle_look_the_same(client, db):
-    handle, _, _ = register(client, db)
+    handle, _ = register(client, db)
     client.cookies.clear()
     wrong = login(client, handle, "wrong password!")
     unknown = login(client, "brave-fox-11")
@@ -47,7 +47,7 @@ def test_session_token_is_not_stored(client, db):
 
 
 def test_expired_session_is_rejected_and_deleted(client, db):
-    handle, _, _ = register(client, db)
+    handle, _ = register(client, db)
     stored = db.scalars(select(UserSession)).one()
     stored.expires_at = datetime.now(UTC) - timedelta(seconds=1)
     db.commit()
@@ -57,8 +57,22 @@ def test_expired_session_is_rejected_and_deleted(client, db):
 
 
 def test_forged_session_cookie_is_ignored(client, db):
-    handle, _, _ = register(client, db)
+    handle, _ = register(client, db)
     client.cookies.delete(SESSION_COOKIE)
     client.cookies.set(SESSION_COOKIE, "forged")
     assert client.cookies[SESSION_COOKIE] == "forged"
     assert handle not in client.get("/").text
+
+
+def test_no_account_recovery(client, db):
+    """Sign-in is nickname and password only; there is no recovery code or recovery route."""
+    page = client.get("/login")
+    assert "/recover" not in page.text
+    assert uk("login.no_recovery") in page.text
+    assert client.get("/recover").status_code == 404
+    _, response = register(client, db)
+    assert uk("register.remember") in response.text
+    columns = db.execute(
+        text("SELECT column_name FROM information_schema.columns WHERE table_name = 'users'")
+    ).scalars()
+    assert not [name for name in columns if "recover" in name]

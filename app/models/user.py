@@ -27,7 +27,6 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     handle: Mapped[str] = mapped_column(String(64), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    recovery_code_hash: Mapped[str] = mapped_column(String(255))
     # Profile fields are filled in on the profile page, so they start empty.
     gender: Mapped[str | None] = mapped_column(String(32))
     seeking: Mapped[list[str] | None] = mapped_column(ARRAY(String(32)))

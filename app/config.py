@@ -19,7 +19,7 @@ settings = Settings()
 
 # Access
 SESSION_TTL = timedelta(days=7)
-CONSENT_VERSION = "2026-10-18.4"  # bumped: Ukrainian consent wording corrected
+CONSENT_VERSION = "2026-10-25.1"  # bumped: recovery code removed from the stored data
 PASSWORD_MIN_LENGTH = 10
 PASSWORD_MAX_LENGTH = 128
 INVITE_MAX_COUNT = 1000
@@ -76,8 +76,6 @@ DAY = 24 * HOUR
 LOGIN_PER_IP = Rule("login_ip", 30, 15 * 60)
 LOGIN_FAILS_PER_HANDLE = Rule("login_handle", 10, 15 * 60)
 REGISTER_PER_IP = Rule("register_ip", 20, HOUR)
-RECOVER_PER_IP = Rule("recover_ip", 10, HOUR)
-RECOVER_FAILS_PER_HANDLE = Rule("recover_handle", 5, HOUR)
 ACCOUNT_ACTIONS_PER_USER = Rule("account_user", 10, HOUR)  # password change, deletion
 OCR_PER_USER = Rule("ocr_user", 20, DAY)
 FEED_PAGES_PER_USER = Rule("feed_user", 20, DAY)

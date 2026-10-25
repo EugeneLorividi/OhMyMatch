@@ -12,11 +12,11 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <label for="current_password">{{ t("account.current_password") }}</label>
       <input id="current_password" name="current_password" type="password" required maxlength="{{ password_max }}" autocomplete="current-password">
-      <label for="password">{{ t("recover.new_password", min=password_min) }}</label>
+      <label for="password">{{ t("account.new_password", min=password_min) }}</label>
       <input id="password" name="password" type="password" required minlength="{{ password_min }}" maxlength="{{ password_max }}" autocomplete="new-password">
-      <label for="password_confirm">{{ t("recover.new_password_confirm") }}</label>
+      <label for="password_confirm">{{ t("account.new_password_confirm") }}</label>
       <input id="password_confirm" name="password_confirm" type="password" required minlength="{{ password_min }}" maxlength="{{ password_max }}" autocomplete="new-password">
-      <button type="submit">{{ t("recover.submit") }}</button>
+      <button type="submit">{{ t("account.password_submit") }}</button>
     </form>
   </section>
 

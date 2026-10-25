@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.auth import CurrentUser, create_session, delete_all_sessions, end_session
+from app.auth import CurrentUser, create_session, end_session
 from app.clientip import client_ip
 from app.config import (
     CONSENT_VERSION,
@@ -15,8 +15,6 @@ from app.config import (
     LOGIN_PER_IP,
     PASSWORD_MAX_LENGTH,
     PASSWORD_MIN_LENGTH,
-    RECOVER_FAILS_PER_HANDLE,
-    RECOVER_PER_IP,
     REGISTER_PER_IP,
 )
 from app.csrf import rotate_csrf_token
@@ -28,7 +26,6 @@ from app.models import Invite, User
 from app.ratelimit import limiter
 from app.routes._limits import too_many
 from app.security import (
-    generate_code,
     hash_invite_code,
     hash_secret,
     needs_rehash,
@@ -44,7 +41,6 @@ FormStr = Annotated[str, Form()]
 
 INVALID_INVITE = msg("error.invalid_invite")
 INVALID_LOGIN = msg("error.invalid_login")
-INVALID_RECOVERY = msg("error.invalid_recovery")
 
 
 def _handle_key(handle: str) -> str:
@@ -138,11 +134,9 @@ def register(
         db.rollback()
         return render(request, "register_code.html", {"errors": [INVALID_INVITE]}, 400)
     now = datetime.now(UTC)
-    recovery_code = generate_code()
     user = User(
         handle=handle,
         password_hash=hash_secret(password),
-        recovery_code_hash=hash_secret(normalize_code(recovery_code)),
         consent_version=CONSENT_VERSION,
         consent_at=now,
         age_confirmed_at=now,
@@ -160,8 +154,7 @@ def register(
     event(request, "registered")
 
     rotate_csrf_token(request)
-    context = {"user": user, "recovery_code": recovery_code}
-    response = render(request, "register_done.html", context, no_store=True)
+    response = render(request, "register_done.html", {"user": user}, no_store=True)
     create_session(db, user, response)
     return response
 
@@ -200,49 +193,4 @@ def logout(request: Request, db: Db) -> Response:
     rotate_csrf_token(request)
     response = _redirect_home()
     end_session(db, request, response)
-    return response
-
-
-@router.get("/recover")
-def recover_page(request: Request, user: CurrentUser) -> Response:
-    if user is not None:
-        return _redirect_home()
-    return render(request, "recover.html")
-
-
-@router.post("/recover")
-def recover(
-    request: Request,
-    db: Db,
-    handle: FormStr = "",
-    recovery_code: FormStr = "",
-    password: FormStr = "",
-    password_confirm: FormStr = "",
-) -> Response:
-    handle_wait = limiter.retry_after(RECOVER_FAILS_PER_HANDLE, _handle_key(handle))
-    ip_wait = limiter.hit(RECOVER_PER_IP, client_ip(request))
-    if handle_wait or ip_wait:
-        rule = RECOVER_FAILS_PER_HANDLE if handle_wait else RECOVER_PER_IP
-        return too_many(request, rule, handle_wait or ip_wait, "rate.attempts")
-    errors = _password_errors(password, password_confirm)
-    if errors:
-        return render(request, "recover.html", {"errors": errors}, 400)
-    user = _find_user(db, handle)
-    stored = user.recovery_code_hash if user else None
-    if not verify_secret(stored, normalize_code(recovery_code)) or user is None:
-        limiter.record(RECOVER_FAILS_PER_HANDLE, _handle_key(handle))
-        event(request, "recovery_failed")
-        return render(request, "recover.html", {"errors": [INVALID_RECOVERY]}, 400)
-
-    new_code = generate_code()
-    user.password_hash = hash_secret(password)
-    user.recovery_code_hash = hash_secret(normalize_code(new_code))
-    delete_all_sessions(db, user)
-    db.commit()
-    event(request, "recovered")
-
-    rotate_csrf_token(request)
-    context = {"user": user, "recovery_code": new_code}
-    response = render(request, "recover_done.html", context, no_store=True)
-    create_session(db, user, response)
     return response

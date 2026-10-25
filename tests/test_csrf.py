@@ -14,7 +14,7 @@ POST_PATHS = sorted(
 
 
 def test_post_routes_exist():
-    assert {"/register", "/login", "/logout", "/recover"} <= set(POST_PATHS)
+    assert {"/register", "/login", "/logout"} <= set(POST_PATHS)
 
 
 def test_csrf_dependency_is_global():

@@ -14,8 +14,6 @@ from app.config import (
     OCR_PER_USER,
     PROFILE_SAVES_PER_USER,
     REACTIONS_PER_USER,
-    RECOVER_FAILS_PER_HANDLE,
-    RECOVER_PER_IP,
     REGISTER_PER_IP,
     RESULT_SAVES_PER_USER,
 )
@@ -35,7 +33,7 @@ def login(client, handle, password="wrong password!"):  # noqa: S107
 
 
 def test_login_per_handle(client, db):
-    handle, _, _ = register(client, db)
+    handle, _ = register(client, db)
     client.cookies.clear()
     for _ in range(LOGIN_FAILS_PER_HANDLE.limit):
         assert login(client, handle).status_code == 400
@@ -47,7 +45,7 @@ def test_login_per_handle(client, db):
 
 
 def test_login_success_does_not_count_against_handle(client, db):
-    handle, _, _ = register(client, db)
+    handle, _ = register(client, db)
     for _ in range(LOGIN_FAILS_PER_HANDLE.limit + 2):
         client.cookies.clear()
         assert login(client, handle, PASSWORD).status_code == 303
@@ -63,28 +61,6 @@ def test_register_per_ip(client):
     for _ in range(REGISTER_PER_IP.limit):
         assert post(client, "/register", {"invite_code": "AAAA"}).status_code == 400
     assert post(client, "/register", {"invite_code": "AAAA"}).status_code == 429
-
-
-def recover(client, handle, code="AAAA-BBBB-CCCC-DDDD"):
-    data = {
-        "handle": handle,
-        "recovery_code": code,
-        "password": PASSWORD,
-        "password_confirm": PASSWORD,
-    }
-    return post(client, "/recover", data)
-
-
-def test_recover_per_handle_and_per_ip(client, db):
-    handle, code, _ = register(client, db)
-    client.cookies.clear()
-    for _ in range(RECOVER_FAILS_PER_HANDLE.limit):
-        assert recover(client, handle).status_code == 400
-    assert recover(client, handle, code).status_code == 429  # right code, but handle is locked
-    remaining = RECOVER_PER_IP.limit - RECOVER_FAILS_PER_HANDLE.limit - 1
-    for index in range(remaining):
-        assert recover(client, f"other-{index}").status_code == 400
-    assert recover(client, "fresh-handle").status_code == 429
 
 
 @pytest.fixture

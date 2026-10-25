@@ -18,7 +18,7 @@ def change(client, current, new=NEW_PASSWORD, confirm=None):
 
 
 def test_change_password_ends_all_other_sessions(client, db):
-    handle, _, _ = register(client, db)
+    handle, _ = register(client, db)
     other = post(client, "/login", {"handle": handle, "password": PASSWORD})
     assert other.status_code == 200
     assert db.scalar(select(func.count()).select_from(UserSession)) == 2
@@ -48,7 +48,7 @@ def test_change_password_ends_all_other_sessions(client, db):
 
 
 def test_delete_needs_password_and_removes_everything(client, db):
-    handle, _, _ = register(client, db)
+    handle, _ = register(client, db)
     wrong = post(client, "/account/delete", {"password": "wrong password!"})
     assert wrong.status_code == 400
     assert uk("error.wrong_password") in wrong.text

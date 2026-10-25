@@ -24,12 +24,8 @@ def handle_from(html: str) -> str:
     return re.search(r'name="handle" value="([^"]+)"', html).group(1)
 
 
-def recovery_code_from(html: str) -> str:
-    return re.search(r'class="code">([A-Z0-9-]+)<', html).group(1)
-
-
 def register(client, db, password: str = PASSWORD):
-    """Full registration. Returns (handle, recovery code, final response)."""
+    """Full registration. Returns (handle, final response)."""
     code = make_invite(db)
     step1 = post(client, "/register", {"step": "code", "invite_code": code})
     handle = handle_from(step1.text)
@@ -47,7 +43,7 @@ def register(client, db, password: str = PASSWORD):
         },
     )
     assert done.status_code == 200, done.text
-    return handle, recovery_code_from(done.text), done
+    return handle, done
 
 
 def full_result_text(values: dict[str, int] | None = None) -> str:

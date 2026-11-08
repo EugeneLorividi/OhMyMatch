@@ -1,19 +1,19 @@
 # Deployment (stage 8)
 
 Checklist from spec section 3, mapped to who does what. Domain: `ohmymatch.xyz` (Namecheap).
-State on 2026-10-25 is in the last column; "root" steps cannot be done by the `ohmymatch` user.
+State on 2026-11-08 is in the last column; "root" steps cannot be done by the `ohmymatch` user.
 
 | # | Item | Who | State |
 | --- | --- | --- | --- |
 | 1 | Separate unix user without sudo | root | done: `ohmymatch`, groups `ohmymatch, users` |
 | 2 | Separate Postgres user with access to its own database only | app | done: Postgres runs in its own container on an internal network, only the app database exists |
 | 3 | Rootless containers, own network, app only on `127.0.0.1:8000` | app | done: linger on, user `docker` service enabled, `restart: unless-stopped` |
-| 4 | nginx on 80/443 proxies to the app, certificate via certbot | root | partly: vhost and certificate exist, but the vhost still returns a placeholder |
-| 5 | Firewall: only 80, 443, SSH; SSH by key only; fail2ban | root | to confirm: fail2ban active; `ufw status` and effective `sshd -T` need root |
+| 4 | nginx on 80/443 proxies to the app, certificate via certbot | root | done: production vhost identical to `deploy/nginx.conf.example`, live over HTTPS |
+| 5 | Firewall: only 80, 443, SSH; SSH by key only; fail2ban | root | done, confirmed by the owner (root): ufw allows 22, 80, 443; password SSH off; fail2ban sshd active |
 | 6 | Proper domain, HTTPS required, HSTS on | owner, root | done: A record points to this VPS, HTTP redirects to HTTPS, HSTS sent |
-| 7 | Secrets only in `.env`, mode 600, outside the repo | owner | file ok (`~/secrets/ohmymatch.env`, 600, dir 700), but it still holds development values |
-| 8 | Backups encrypted on the server (age), key kept apart, rotation at most 14 days | owner | tooling done and restore tested; needs the real key and the cron entry |
-| 9 | Proxy logs without query strings, at most 7 days | root | format ok; logrotate points at the wrong file |
+| 7 | Secrets only in `.env`, mode 600, outside the repo | owner | done: `~/secrets/ohmymatch.env` (600, dir 700) holds production values, `CONTACT_KEY` included |
+| 8 | Backups encrypted on the server (age), key kept apart, rotation at most 14 days | owner | done: real public key in place, cron installed, round trip tested (incl. contact tables); only the owner can decrypt |
+| 9 | Proxy logs without query strings, at most 7 days | root | done: logrotate installed (owner confirmed), log mode 640 |
 
 ## Owner steps (no root needed)
 

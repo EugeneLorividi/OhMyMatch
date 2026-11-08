@@ -163,3 +163,5 @@ One line per decision. Newest at the bottom of each stage.
 - Logging: only fixed events `contact_saved`, `contact_cleared`, `contact_shared`, `contact_mutual`; a test captures all log records and checks that no @ appears. Rate limits: 10 saves and 50 presses per user per day.
 - `CONSENT_VERSION` is now `2026-11-08.1`; consent text, `/privacy` (two table lines and a section that says "we do not verify ownership of an @") and the nav-free settings form were updated in both languages. Existing accounts keep their old version string; there is still no re-consent flow.
 - Dependency: `cryptography` 50.0.2 (from `uv add`).
+- Restore round trip (`deploy/backup/restore-test.sh`) now seeds and digests `telegram_contacts` and `contact_shares`, so migration 0005 data is covered. `/privacy` now says that contact consents also vanish when the @ is changed or removed and when the account is deleted (matches spec section 8).
+- `.gitignore` ignored all `*.sql`, so the synthetic restore-test files `digest.sql` and `seed-synthetic.sql` were never committed; they are now explicitly allowed (synthetic data only).

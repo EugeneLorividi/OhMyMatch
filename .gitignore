@@ -7,6 +7,8 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.sql
+!deploy/backup/digest.sql
+!deploy/backup/seed-synthetic.sql
 *.dump
 *.age
 backups/

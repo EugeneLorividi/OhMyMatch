@@ -177,7 +177,7 @@
   "privacy.not_stored_title": "What is not stored",
   "privacy.stored_account": "Account: the generated nickname, a hash of the password (argon2id), the creation date, the consent version and time, and the time of the 18+ confirmation.",
   "privacy.stored_contact": "Contact (optional): your Telegram @username, encrypted only. The encryption key is in the server configuration, not in the database or in backups. We do not check that the @ is yours.",
-  "privacy.stored_contact_shares": "Contact consents: for each match, a “share contact” mark and the time it was made. It disappears together with the match.",
+  "privacy.stored_contact_shares": "Contact consents: for each match, a “share contact” mark and the time it was made. It disappears together with the match, when you change or remove your @, and when you delete your account.",
   "privacy.stored_dislikes": "The “no” list: the categories you marked.",
   "privacy.stored_invites": "Invites: a hash of the code, its expiry, and which account used it and when.",
   "privacy.stored_profile": "Profile: who you are, who you are looking for, the search mode, and whether the profile is complete.",

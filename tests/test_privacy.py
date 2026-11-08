@@ -9,6 +9,8 @@ DESCRIBED = {
     "dislikes": ("privacy.stored_dislikes",),
     "reactions": ("privacy.stored_reactions",),
     "matches": ("privacy.stored_reactions",),
+    "telegram_contacts": ("privacy.stored_contact",),
+    "contact_shares": ("privacy.stored_contact_shares",),
     "sessions": ("privacy.stored_sessions",),
     "invites": ("privacy.stored_invites",),
 }
@@ -43,7 +45,13 @@ def test_page_is_public_in_both_languages(client):
             for key in keys:
                 params = {"days": SESSION_TTL.days} if key == "privacy.stored_sessions" else {}
                 assert translate(locale, key, **params) in page.text, key
-        for key in ("privacy.inference", "privacy.not_stored", "privacy.memory", "consent.admin"):
+        for key in (
+            "privacy.contact",
+            "privacy.inference",
+            "privacy.not_stored",
+            "privacy.memory",
+            "consent.admin",
+        ):
             assert translate(locale, key) in page.text, key
         assert translate(locale, "privacy.backups", days=BACKUP_RETENTION_DAYS) in page.text
         assert translate(locale, "privacy.logs", days=PROXY_LOG_RETENTION_DAYS) in page.text
@@ -62,6 +70,7 @@ def test_consent_links_privacy_and_warns_about_inference(client, db):
     page = post(client, "/register", {"step": "code", "invite_code": code}).text
     assert 'href="/privacy"' in page
     assert translate("uk", "consent.inference") in page
+    assert translate("uk", "consent.contact") in page
 
 
 def test_footer_links_privacy_everywhere(client):

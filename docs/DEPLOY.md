@@ -29,7 +29,14 @@ State on 2026-10-25 is in the last column; "root" steps cannot be done by the `o
 3. Backups: `mkdir -m 700 ~/ohmymatch/backups`, install `deploy/crontab.example` with `crontab -e`,
    run it once by hand and check that a `.dump.age` file appears. Copy backups off the server if wanted:
    they are already encrypted.
-4. Optional: an AAAA record for `ohmymatch.xyz` to `2a00:c98:400f:109:1c00:3ff:fe00:8f9`
+4. Contact key (Telegram @username exchange). Without `CONTACT_KEY` the feature stays off and the app
+   runs as before. To turn it on, add one line to `~/secrets/ohmymatch.env`:
+   `CONTACT_KEY=` plus the output of
+   `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"`.
+   The key must not be in the database dump or in the backups (they hold ciphertext only), so keep
+   a copy of it with the other secrets; if it is lost or changed, stored usernames cannot be read and
+   people have to enter them again. The new tables come from `alembic upgrade head` (revision 0005).
+5. Optional: an AAAA record for `ohmymatch.xyz` to `2a00:c98:400f:109:1c00:3ff:fe00:8f9`
    (nginx already listens on IPv6).
 
 ## Root steps

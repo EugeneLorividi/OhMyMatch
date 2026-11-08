@@ -1,9 +1,11 @@
 import os
 
 import pytest
+from cryptography.fernet import Fernet
 
-# Synthetic key for tests only; must be set before app.config is imported.
+# Synthetic keys for tests only; must be set before app.config is imported.
 os.environ.setdefault("SECRET_KEY", "test-only-secret-key-" + "x" * 32)
+os.environ.setdefault("CONTACT_KEY", Fernet.generate_key().decode())
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
 if not TEST_DATABASE_URL:

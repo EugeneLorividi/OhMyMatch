@@ -1,8 +1,9 @@
 from sqlalchemy import delete, func, or_, select
 
+from app import contact
 from app.categories import CATEGORY_KEYS
 from app.db.base import Base
-from app.models import User
+from app.models import Match, User
 from app.reactions import react
 from tests.helpers import post, register, score_form
 from tests.test_feed import add_user
@@ -16,6 +17,8 @@ USER_COLUMNS = {
     "dislikes": ("user_id",),
     "reactions": ("from_user", "to_user"),
     "matches": ("user_a", "user_b"),
+    "telegram_contacts": ("user_id",),
+    "contact_shares": ("user_id",),
 }
 
 
@@ -39,6 +42,9 @@ def user_with_rows_everywhere(client, db) -> User:
     partner = add_user(db, gender="woman", seeking=("man",), submissive=80)
     react(db, partner, user.id, "like")
     react(db, user, partner.id, "like")
+    match = db.scalars(select(Match)).one()
+    contact.gateway.save_username(db, user.id, "cascade_user")
+    contact.gateway.share(db, user.id, match.id)
     rows = user_rows(db, user.id)
     assert all(count >= 1 for count in rows.values())
     assert rows["matches"] == 1

@@ -20,6 +20,24 @@
     </form>
   </section>
 
+  {% if contact_enabled %}
+  <section class="tab">
+    <h2>{{ t("account.contact_title") }}</h2>
+    <p>{{ t("account.contact_intro") }}</p>
+    <p>{{ t("account.contact_unverified") }}</p>
+    {% with errors = contact_errors %}{% include "_errors.html" %}{% endwith %}
+    <form method="post" action="/account/contact" autocomplete="off">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label for="contact_username">{{ t("account.contact_label") }}</label>
+      <input id="contact_username" name="username" type="text" maxlength="33" value="{% if contact_username %}@{{ contact_username }}{% endif %}" autocapitalize="none" spellcheck="false" placeholder="@username">
+      <p class="muted">{{ t("account.contact_hint") }}</p>
+      <label class="check"><input type="checkbox" name="ack" value="yes"> {{ t("account.contact_ack") }}</label>
+      <p class="muted">{{ t("account.contact_change_note") }}</p>
+      <button type="submit">{{ t("common.save") }}</button>
+    </form>
+  </section>
+  {% endif %}
+
   <section class="tab danger">
     <h2>{{ t("account.delete_title") }}</h2>
     <p>{{ t("account.delete_intro") }}</p>

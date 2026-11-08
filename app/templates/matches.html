@@ -6,7 +6,22 @@
     <article class="card">
       <h2 class="handle">{{ partner.handle }}</h2>
       <p class="muted">{{ t("matches.since", date=match.created_at.date().isoformat()) }}</p>
-      <p>{{ t("matches.contact_stub") }}</p>
+      {% if contact_enabled %}
+        {% set view = contact_views[match.id] %}
+        {% if view.status == "mutual" %}
+          <p>{{ t("matches.contact_theirs") }} <a href="https://t.me/{{ view.theirs }}" target="_blank" rel="noopener noreferrer">@{{ view.theirs }}</a></p>
+          <p>{{ t("matches.contact_yours") }} @{{ view.mine }}</p>
+          <p class="muted">{{ t("matches.contact_unverified") }}</p>
+        {% elif view.status == "waiting" %}
+          <p>{{ t("matches.contact_waiting") }}</p>
+        {% elif contact_username %}
+          <form method="get" action="/matches/{{ match.id }}/contact">
+            <button type="submit" class="secondary">{{ t("matches.contact_share") }}</button>
+          </form>
+        {% else %}
+          <p class="muted"><a href="/account">{{ t("matches.contact_add") }}</a></p>
+        {% endif %}
+      {% endif %}
       <form method="post" action="/matches/{{ match.id }}/remove">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <button type="submit" class="secondary">{{ t("matches.remove") }}</button>

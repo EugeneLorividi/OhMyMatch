@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}{{ t("contact.confirm_title") }} · OhMyMatch{% endblock %}
+{% block content %}
+  <h1>{{ t("contact.confirm_title") }}</h1>
+  <p>{{ t("contact.confirm_yours") }} <strong>@{{ username }}</strong></p>
+  <ul>
+    <li>{{ t("contact.confirm_irreversible") }}</li>
+    <li>{{ t("contact.confirm_only_mutual") }}</li>
+    <li>{{ t("contact.confirm_unverified") }}</li>
+    <li>{{ t("contact.confirm_link") }}</li>
+  </ul>
+  <form method="post" action="/matches/{{ match.id }}/contact">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <input type="hidden" name="confirm" value="yes">
+    <button type="submit" class="danger">{{ t("contact.confirm_submit") }}</button>
+  </form>
+  <p><a href="/matches">{{ t("contact.confirm_cancel") }}</a></p>
+{% endblock %}

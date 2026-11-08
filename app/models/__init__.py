@@ -1,3 +1,4 @@
+from app.models.contact import ContactShare, TelegramContact
 from app.models.dislike import Dislike
 from app.models.invite import Invite
 from app.models.match import Match
@@ -6,4 +7,14 @@ from app.models.test_score import TestScore
 from app.models.user import User
 from app.models.user_session import UserSession
 
-__all__ = ["Dislike", "Invite", "Match", "Reaction", "TestScore", "User", "UserSession"]
+__all__ = [
+    "ContactShare",
+    "Dislike",
+    "Invite",
+    "Match",
+    "Reaction",
+    "TelegramContact",
+    "TestScore",
+    "User",
+    "UserSession",
+]

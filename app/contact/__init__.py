@@ -1,11 +1,20 @@
-"""Contact between matched people. Telegram arrives in a separate spec; the MVP does nothing."""
+"""Contact between matched people: an optional Telegram @username, shown to a match only
+after both people pressed "share contact" (section 8)."""
 
-import uuid
+from app.contact.gateway import (
+    ContactDisabled,
+    ContactGateway,
+    ContactView,
+    MatchNotFound,
+    NoUsername,
+    gateway,
+)
 
-
-class ContactGateway:
-    def on_match(self, match_id: uuid.UUID) -> None:
-        """Called once, after a new match is committed."""
-
-
-gateway = ContactGateway()
+__all__ = [
+    "ContactDisabled",
+    "ContactGateway",
+    "ContactView",
+    "MatchNotFound",
+    "NoUsername",
+    "gateway",
+]

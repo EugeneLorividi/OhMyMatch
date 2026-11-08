@@ -13,7 +13,18 @@ from app.eventlog import event
 from app.i18n import get_locale, msg, translate
 from app.limits import BodySizeLimit
 from app.middleware import RequestContext, SecurityHeaders
-from app.routes import account, auth, feed, lang, pages, privacy, profile, reactions, result
+from app.routes import (
+    account,
+    auth,
+    contact,
+    feed,
+    lang,
+    pages,
+    privacy,
+    profile,
+    reactions,
+    result,
+)
 from app.templating import render
 
 app = FastAPI(
@@ -33,6 +44,7 @@ ROUTERS = (
     result.router,
     feed.router,
     reactions.router,
+    contact.router,
     account.router,
     privacy.router,
 )

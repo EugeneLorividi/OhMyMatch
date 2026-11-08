@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from datetime import timedelta
 
-from pydantic import Field
+from cryptography.fernet import Fernet
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,13 +14,29 @@ class Settings(BaseSettings):
     secret_key: str = Field(min_length=32)
     # Peers whose X-Forwarded-For is trusted (comma-separated IPs or CIDRs); empty trusts none.
     trusted_proxies: str = ""
+    # Fernet key for the Telegram contact table. Empty switches the contact feature off.
+    # It lives in the environment only, never in the database or the repository.
+    contact_key: str = ""
+
+    @field_validator("contact_key")
+    @classmethod
+    def _contact_key_is_fernet(cls, value: str) -> str:
+        if value:
+            try:
+                Fernet(value)
+            except ValueError:
+                # Never echo the value.
+                raise ValueError(
+                    "CONTACT_KEY must be a Fernet key (32 url-safe base64 bytes)"
+                ) from None
+        return value
 
 
 settings = Settings()
 
 # Access
 SESSION_TTL = timedelta(days=7)
-CONSENT_VERSION = "2026-10-25.1"  # bumped: recovery code removed from the stored data
+CONSENT_VERSION = "2026-11-08.1"  # bumped: optional Telegram @username and contact sharing
 PASSWORD_MIN_LENGTH = 10
 PASSWORD_MAX_LENGTH = 128
 INVITE_MAX_COUNT = 1000
@@ -83,6 +100,8 @@ REACTIONS_PER_USER = Rule("react_user", 100, DAY)
 RESULT_SAVES_PER_USER = Rule("result_user", 5, DAY)
 DISLIKES_SAVES_PER_USER = Rule("dislikes_user", 5, DAY)
 PROFILE_SAVES_PER_USER = Rule("profile_user", 5, DAY)
+CONTACT_SAVES_PER_USER = Rule("contact_user", 10, DAY)  # saving or clearing the @
+CONTACT_SHARES_PER_USER = Rule("share_user", 50, DAY)
 
 # Retention promised on /privacy; enforced by deploy/backup (backups) and nginx logrotate (logs).
 BACKUP_RETENTION_DAYS = 14

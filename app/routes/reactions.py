@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy.orm import Session
 
+from app import contact
 from app.auth import RequiredUser
 from app.config import REACTIONS_PER_USER
 from app.db.session import get_db
@@ -76,7 +77,15 @@ def post_reaction(
 
 @router.get("/matches")
 def matches_page(request: Request, user: RequiredUser, db: Db) -> Response:
-    context = {"user": user, "matches": matches_of(db, user)}
+    matches = matches_of(db, user)
+    views = contact.gateway.views(db, user.id, [match for match, _ in matches])
+    context = {
+        "user": user,
+        "matches": matches,
+        "contact_enabled": contact.gateway.enabled,
+        "contact_views": views,
+        "contact_username": contact.gateway.own_username(db, user.id),
+    }
     return render(request, "matches.html", context, no_store=True)
 
 

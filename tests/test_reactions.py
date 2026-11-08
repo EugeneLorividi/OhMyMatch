@@ -217,7 +217,7 @@ def test_mutual_like_through_routes_redirects_to_matches(client, db, calls):
     page = client.get("/matches")
     assert page.headers["cache-control"] == "no-store"
     assert her.handle in page.text
-    assert uk("matches.contact_stub") in page.text
+    assert uk("matches.contact_add") in page.text  # no @ saved yet
     text = without_random_values(page.text, client, her.handle, me.handle)
     assert not re.search(r"\b88\b", text) and "%" not in text
     assert len(calls) == 1

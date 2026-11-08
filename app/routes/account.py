@@ -5,6 +5,7 @@ from fastapi.responses import Response
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
+from app import contact
 from app.auth import RequiredUser, create_session, delete_all_sessions, end_session
 from app.config import ACCOUNT_ACTIONS_PER_USER
 from app.csrf import rotate_csrf_token
@@ -24,8 +25,16 @@ Db = Annotated[Session, Depends(get_db)]
 FormStr = Annotated[str, Form()]
 
 
-def _page(request: Request, user: User, status_code: int = 200, **context) -> Response:
-    return render(request, "account.html", {"user": user, **context}, status_code)
+def account_view(
+    request: Request, db: Session, user: User, status_code: int = 200, **context
+) -> Response:
+    contact_context = {
+        "contact_enabled": contact.gateway.enabled,
+        "contact_username": contact.gateway.own_username(db, user.id),
+    }
+    return render(
+        request, "account.html", {"user": user, **contact_context, **context}, status_code
+    )
 
 
 def _limited(request: Request, user: User) -> Response | None:
@@ -37,8 +46,8 @@ def _limited(request: Request, user: User) -> Response | None:
 
 
 @router.get("/account")
-def account_page(request: Request, user: RequiredUser) -> Response:
-    return _page(request, user)
+def account_page(request: Request, user: RequiredUser, db: Db) -> Response:
+    return account_view(request, db, user)
 
 
 @router.post("/account/password")
@@ -54,17 +63,17 @@ def change_password(
         return limited
     if not verify_secret(user.password_hash, current_password):
         event(request, "password_change_failed")
-        return _page(request, user, 400, password_errors=[msg("error.wrong_password")])
+        return account_view(request, db, user, 400, password_errors=[msg("error.wrong_password")])
     errors = _password_errors(password, password_confirm)
     if errors:
-        return _page(request, user, 400, password_errors=errors)
+        return account_view(request, db, user, 400, password_errors=errors)
     user.password_hash = hash_secret(password)
     # Section 6: every session ends on a password change; this browser gets a fresh one.
     delete_all_sessions(db, user)
     db.commit()
     event(request, "password_changed")
     rotate_csrf_token(request)
-    response = _page(request, user, notice=msg("account.password_changed"))
+    response = account_view(request, db, user, notice=msg("account.password_changed"))
     create_session(db, user, response)
     return response
 
@@ -77,7 +86,7 @@ def delete_account(
         return limited
     if not verify_secret(user.password_hash, password):
         event(request, "account_delete_failed")
-        return _page(request, user, 400, delete_errors=[msg("error.wrong_password")])
+        return account_view(request, db, user, 400, delete_errors=[msg("error.wrong_password")])
     # Hard delete; every other table cascades from users (sessions included).
     db.execute(delete(User).where(User.id == user.id))
     db.commit()

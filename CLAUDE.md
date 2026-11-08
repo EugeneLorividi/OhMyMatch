@@ -15,7 +15,7 @@ Spec: docs/SPEC.uk.md is the spec and the source of truth, written in Ukrainian.
 - Never log percentages, gender, pairs, request bodies or query strings. Log only event type and request id.
 - No third-party scripts, fonts, analytics, trackers, CDNs. No paid APIs, no Claude API: OCR and parsing run locally.
 - Never expose other users' percentages, roles or dislikes in any HTML/JSON response.
-- No email, phone, name, IP, free text or photos in the database.
+- The database has no names, emails, phones, IPs, free text or photos. The only contact identifier is a Telegram username, stored encrypted and in its own table.
 
 ## Environment
 - Python 3.12, FastAPI, Jinja2 + HTMX, PostgreSQL, SQLAlchemy 2, Alembic, pytest, ruff. Pin versions in a lock file.

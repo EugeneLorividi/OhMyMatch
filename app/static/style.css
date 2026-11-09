@@ -7,7 +7,8 @@ header nav { display: flex; align-items: center; gap: 1rem; }
 main { max-width: 36rem; margin: 0 auto; padding: 1rem; }
 label { display: block; margin-top: 0.75rem; }
 label.check { display: flex; gap: 0.5rem; align-items: baseline; }
-input:not([type="checkbox"]) { width: 100%; padding: 0.5rem; font: inherit; }
+input:not([type="checkbox"]):not([type="radio"]) { width: 100%; padding: 0.5rem; font: inherit; }
+input[type="checkbox"], input[type="radio"] { flex: none; margin: 0; }
 button { margin-top: 1rem; padding: 0.5rem 1rem; font: inherit; cursor: pointer; }
 button.secondary { margin-top: 0; }
 button.link { margin: 0; padding: 0; background: none; border: none; color: inherit; text-decoration: underline; }

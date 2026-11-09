@@ -165,3 +165,4 @@ One line per decision. Newest at the bottom of each stage.
 - Dependency: `cryptography` 50.0.2 (from `uv add`).
 - Restore round trip (`deploy/backup/restore-test.sh`) now seeds and digests `telegram_contacts` and `contact_shares`, so migration 0005 data is covered. `/privacy` now says that contact consents also vanish when the @ is changed or removed and when the account is deleted (matches spec section 8).
 - `.gitignore` ignored all `*.sql`, so the synthetic restore-test files `digest.sql` and `seed-synthetic.sql` were never committed; they are now explicitly allowed (synthetic data only).
+- Profile radios: the rule `input:not([type="checkbox"])` gave radios `width: 100%` and padding, which broke the flex label. It now skips radios too, and radios and checkboxes get `flex: none; margin: 0`. Checked in headless Chrome at 390 px and 900 px.

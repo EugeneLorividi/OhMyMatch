@@ -39,6 +39,24 @@ State on 2026-11-08 is in the last column; "root" steps cannot be done by the `o
 5. Optional: an AAAA record for `ohmymatch.xyz` to `2a00:c98:400f:109:1c00:3ff:fe00:8f9`
    (nginx already listens on IPv6).
 
+## Before handing out invites
+
+Demo users (`demo_1` to `demo_6`) are visible in every feed, so they must be gone before real people register.
+
+```sh
+cd ~/ohmymatch
+docker compose run --rm app python -m app.cli delete-demo       # prints "Deleted N demo users."
+docker compose run --rm app python -m app.cli delete-demo       # must print "Deleted 0 demo users."
+```
+
+Walk-through (owner only): the password file goes to `~/secrets`. Inside the container only root
+can write there; in rootless Docker that root is the `ohmymatch` user, so the file stays yours, mode 600.
+
+```sh
+docker compose run --rm --user root -v "$HOME/secrets:/secrets" app \
+  python -m app.cli seed-demo --target <your-handle> --out /secrets/demo-users.txt
+```
+
 ## Root steps
 
 1. nginx: replace `/etc/nginx/sites-available/ohmymatch.xyz` with `deploy/nginx.conf.example`

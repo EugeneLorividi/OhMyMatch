@@ -20,6 +20,8 @@ class ParseResult:
     errors: list[Msg] = field(default_factory=list)
     # Keys that need the user's attention on the confirmation form.
     flagged: set[str] = field(default_factory=set)
+    # The input looked like a result page that is not in English.
+    cyrillic: bool = False
 
     @property
     def missing(self) -> list[str]:
@@ -37,6 +39,10 @@ def normalize_name(name: str) -> str:
     name = re.sub(r"\s*([/()-])\s*", r"\1", name)
     return re.sub(r"(\S)\(", r"\1 (", name)
 
+
+# Any Cyrillic letter, written as escapes: a result page in a non-English language lists the
+# categories under names this parser does not know (and must not learn).
+_CYRILLIC = re.compile("[\u0400-\u04ff]")
 
 _CANONICAL = {normalize_name(c.name): c.key for c in CATEGORIES}
 
@@ -65,7 +71,10 @@ def parse_text(text: str) -> ParseResult:
         percent, name = parts
         key = match_name(name)
         if key is None:
-            result.errors.append(msg("parse.unknown_category", line=number, name=name))
+            if _CYRILLIC.search(name):
+                result.cyrillic = True  # one explicit error below instead of one per line
+            else:
+                result.errors.append(msg("parse.unknown_category", line=number, name=name))
             continue
         label = CATEGORY_BY_KEY[key].name
         if not 0 <= percent <= 100:
@@ -94,5 +103,9 @@ def parse_text(text: str) -> ParseResult:
         result.values[key] = percent
     for key in conflicting:
         del result.values[key]
+    if _CYRILLIC.search(text) and not result.values:
+        result.cyrillic = True
+    if result.cyrillic:
+        result.errors.insert(0, msg("parse.cyrillic"))
     result.flagged.update(result.missing)
     return result

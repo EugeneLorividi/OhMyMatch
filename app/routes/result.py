@@ -43,6 +43,7 @@ def _result_page(
     notice: Msg | None = None,
     status_code: int = 200,
     ocr: bool = False,
+    short: bool = False,
 ) -> Response:
     context = {
         "user": user,
@@ -55,6 +56,7 @@ def _result_page(
         "paste_max": PASTE_MAX_CHARS,
         "ocr_max_files": OCR_MAX_FILES,
         "ocr": ocr,
+        "short": short,
     }
     # The page carries the user's own percentages: keep it out of any cache.
     return render(request, "result.html", context, status_code, no_store=True)
@@ -78,7 +80,10 @@ def parse_result_text(request: Request, user: RequiredUser, form: Form) -> Respo
     parsed = parse_text(text)
     found = len(parsed.values)
     notice = msg("result.found", found=found, total=len(CATEGORY_KEYS))
-    return _result_page(request, user, parsed.values, parsed.flagged, parsed.errors, notice)
+    short = found < len(CATEGORY_KEYS) and not parsed.cyrillic
+    return _result_page(
+        request, user, parsed.values, parsed.flagged, parsed.errors, notice, short=short
+    )
 
 
 @router.post("/result/parse-image")
@@ -109,8 +114,9 @@ def parse_result_image(request: Request, user: RequiredUser, form: Form) -> Resp
         ocr_parser.slots.release()
 
     notice = msg("result.found_ocr", found=len(parsed.values), total=len(CATEGORY_KEYS))
+    short = len(parsed.values) < len(CATEGORY_KEYS)
     return _result_page(
-        request, user, parsed.values, parsed.flagged, parsed.errors, notice, ocr=True
+        request, user, parsed.values, parsed.flagged, parsed.errors, notice, ocr=True, short=short
     )
 
 

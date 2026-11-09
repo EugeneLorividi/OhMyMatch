@@ -132,6 +132,24 @@ def test_pages_render_in_both_languages(client, db, locale):
 
 
 @pytest.mark.parametrize("locale", LOCALES)
+def test_result_hints_in_both_languages(client, db, locale):
+    client.cookies.set(LANG_COOKIE, locale)
+    register(client, db)
+    hint = translate(locale, "result.english_hint")
+    assert "Switch to English" in hint
+    # Same instruction on the page, in the Cyrillic error and next to a short list.
+    assert "Switch to English" in translate(locale, "parse.cyrillic")
+    cyrillic = "".join(map(chr, (0x411, 0x440, 0x44D, 0x442)))
+    response = post(client, "/result/parse-text", {"text": f"92% {cyrillic}"})
+    assert translate(locale, "parse.cyrillic") in response.text
+    assert translate(locale, "result.top10_hint") not in response.text
+    response = post(client, "/result/parse-text", {"text": "92% Rigger"})
+    assert translate(locale, "result.top10_hint") in response.text
+    response = post(client, "/result/parse-text", {"text": full_result_text()})
+    assert translate(locale, "result.top10_hint") not in response.text
+
+
+@pytest.mark.parametrize("locale", LOCALES)
 def test_ocr_warning_in_both_languages(client, db, locale, monkeypatch):
     from app.parsing import ocr_parser
     from app.parsing.ocr_parser import OcrLine

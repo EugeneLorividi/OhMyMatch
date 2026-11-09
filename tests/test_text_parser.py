@@ -3,6 +3,9 @@ from app.i18n import msg
 from app.parsing.text_parser import match_name, parse_text
 from tests.helpers import full_result_text
 
+# A category name as a non-English result page shows it, built from code points.
+CYRILLIC_NAME = "".join(map(chr, (0x411, 0x440, 0x44D, 0x442)))
+
 
 def test_full_list():
     result = parse_text(full_result_text())
@@ -81,6 +84,29 @@ def test_unknown_category_is_an_error():
     result = parse_text("50% Rigger\n40% Unicorn")
     assert result.values == {"rigger": 50}
     assert result.errors == [msg("parse.unknown_category", line=2, name="Unicorn")]
+
+
+def test_cyrillic_names_give_one_explicit_error():
+    text = f"92% {CYRILLIC_NAME}\n80% {CYRILLIC_NAME}2\n50% Rigger\n40% Unicorn"
+    result = parse_text(text)
+    assert result.values == {"rigger": 50}
+    assert result.cyrillic
+    assert result.errors == [
+        msg("parse.cyrillic"),
+        msg("parse.unknown_category", line=4, name="Unicorn"),
+    ]
+
+
+def test_cyrillic_without_percent_lines_is_explicit_too():
+    result = parse_text(f"{CYRILLIC_NAME} 92")
+    assert result.cyrillic
+    assert result.errors == [msg("parse.cyrillic")]
+
+
+def test_cyrillic_in_a_line_that_is_ignored_does_not_block_a_good_result():
+    result = parse_text(full_result_text() + f"\n{CYRILLIC_NAME}")
+    assert not result.cyrillic
+    assert result.errors == []
 
 
 def test_duplicate_with_different_value_is_dropped_and_flagged():
